@@ -1,0 +1,33 @@
+{
+  "name": "ai-personal-tutor",
+  "version": "1.0.0",
+  "description": "AI-Powered Personal Tutor: A Scalable, Adaptive Learning System",
+  "main": "app/main.py",
+  "scripts": {
+    "dev": "./run-dev.sh",
+    "start": "bash -c 'source venv/bin/activate && uvicorn app.main:app --host 0.0.0.0 --port 8000'",
+    "test": "bash -c 'source venv/bin/activate && pytest tests/ -v'",
+    "format": "bash -c 'source venv/bin/activate && black app/ tests/'",
+    "lint": "bash -c 'source venv/bin/activate && flake8 app/ tests/'",
+    "db-upgrade": "bash -c 'source venv/bin/activate && alembic upgrade head'",
+    "db-revision": "bash -c 'source venv/bin/activate && alembic revision --autogenerate'",
+    "frontend:install": "cd frontend && npm install",
+    "frontend:dev": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "full:dev": "npm run dev & npm run frontend:dev"
+  },
+  "keywords": [
+    "ai",
+    "education",
+    "machine-learning",
+    "adaptive-learning",
+    "tutoring",
+    "fastapi"
+  ],
+  "author": "AI Learning Systems",
+  "license": "MIT",
+  "dependencies": {
+    "fastapi": "^0.104.1",
+    "uvicorn": "^0.24.0"
+  }
+}
