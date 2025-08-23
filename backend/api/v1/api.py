@@ -1,31 +1,25 @@
 """
 API v1 router configuration.
 
-Combines all API endpoints into a single router for the
-AI Personal Tutor system.
+Real production endpoints for the AI Learning Platform.
+All demo endpoints have been removed.
 """
 
 from fastapi import APIRouter
 
 from backend.api.v1.endpoints import (
     auth,
-    students, 
-    content,
-    learning,
-    progress,
+    lessons, 
+    quizzes,
     ai_tutor,
-    demo,
-    quiz
+    dashboard
 )
 
 api_router = APIRouter()
 
-# Include all endpoint routers
+# Include all real endpoint routers
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
-api_router.include_router(students.router, prefix="/students", tags=["students"])
-api_router.include_router(content.router, prefix="/content", tags=["content"])
-api_router.include_router(learning.router, prefix="/learning", tags=["learning"])
-api_router.include_router(progress.router, prefix="/progress", tags=["progress"])
+api_router.include_router(lessons.router, prefix="/lessons", tags=["lessons"])
+api_router.include_router(quizzes.router, prefix="/quizzes", tags=["quizzes"])
 api_router.include_router(ai_tutor.router, prefix="/ai-tutor", tags=["ai-tutor"])
-api_router.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
-api_router.include_router(demo.router, prefix="/demo", tags=["demo"])
+api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

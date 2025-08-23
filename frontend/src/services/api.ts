@@ -52,43 +52,130 @@ export const authAPI = {
   refreshToken: () => api.post('/auth/refresh'),
 };
 
-// Student API calls
+// Lessons API calls
+export const lessonAPI = {
+  getSubjects: () => api.get('/lessons/subjects'),
+  
+  getTopics: (subject: string) => api.get(`/lessons/topics/${subject}`),
+  
+  generateLesson: (data: { 
+    subject: string; 
+    topic: string; 
+    difficulty_level?: string;
+    learning_objectives?: string[];
+  }) => api.post('/lessons/generate', data),
+  
+  completeLesson: (data: {
+    lesson_data: any;
+    time_spent_minutes: number;
+  }) => api.post('/lessons/complete', data),
+  
+  getLessonHistory: (limit?: number) => 
+    api.get(`/lessons/history${limit ? `?limit=${limit}` : ''}`),
+  
+  getRecommendations: () => api.get('/lessons/recommendations'),
+};
+
+// Quiz API calls
+export const quizAPI = {
+  generateQuiz: (data: { 
+    subject: string; 
+    topic: string; 
+    difficulty_level?: string; 
+    num_questions?: number;
+    quiz_type?: string;
+  }) => api.post('/quizzes/generate', data),
+  
+  submitQuiz: (data: {
+    quiz_data: any;
+    answers: Record<string, string>;
+    time_spent_minutes: number;
+  }) => api.post('/quizzes/submit', data),
+  
+  getQuizHistory: (limit?: number) => 
+    api.get(`/quizzes/history${limit ? `?limit=${limit}` : ''}`),
+  
+  getStatistics: () => api.get('/quizzes/statistics'),
+  
+  generatePracticeQuiz: (data: {
+    subject?: string;
+    topic?: string;
+    num_questions?: number;
+  }) => api.post('/quizzes/practice-mode', data),
+};
+
+// AI Tutor API calls
+export const aiTutorAPI = {
+  startChatSession: (data: {
+    subject: string;
+    learning_goal?: string;
+  }) => api.post('/ai-tutor/start-session', data),
+  
+  sendMessage: (data: {
+    session_id: string;
+    message: string;
+  }) => api.post('/ai-tutor/send-message', data),
+  
+  getChatHistory: (sessionId: string) => 
+    api.get(`/ai-tutor/session/${sessionId}/history`),
+  
+  getChatSessions: () => api.get('/ai-tutor/sessions'),
+  
+  deleteChatSession: (sessionId: string) => 
+    api.delete(`/ai-tutor/session/${sessionId}`),
+  
+  askQuickQuestion: (data: {
+    question: string;
+    subject?: string;
+  }) => api.post('/ai-tutor/ask-quick', data),
+  
+  explainConcept: (data: {
+    concept: string;
+    subject?: string;
+    level?: string;
+  }) => api.post('/ai-tutor/explain-concept', data),
+};
+
+// Dashboard API calls
+export const dashboardAPI = {
+  getOverview: () => api.get('/dashboard/overview'),
+  
+  getProgressChart: (timeframe?: string) => 
+    api.get(`/dashboard/progress-chart${timeframe ? `?timeframe=${timeframe}` : ''}`),
+  
+  getSubjectBreakdown: () => api.get('/dashboard/subject-breakdown'),
+  
+  getAchievements: () => api.get('/dashboard/achievements'),
+  
+  getLearningStreaks: () => api.get('/dashboard/learning-streaks'),
+};
+
+// Legacy API calls for backward compatibility (will be gradually replaced)
 export const studentAPI = {
-  getProfile: () => api.get('/students/profile'),
-  
-  updateProfile: (data: any) => api.put('/students/profile', data),
-  
-  getDashboard: () => api.get('/demo/dashboard'), // Using demo endpoint for immediate functionality
-  
-  getAchievements: () => api.get('/students/achievements'),
-  
-  getStats: () => api.get('/students/stats'),
+  getProfile: () => authAPI.getCurrentUser(),
+  updateProfile: (data: any) => api.put('/auth/profile', data),
+  getDashboard: () => dashboardAPI.getOverview(),
+  getAchievements: () => dashboardAPI.getAchievements(),
+  getStats: () => dashboardAPI.getOverview(),
 };
 
-// Content API calls
 export const contentAPI = {
-  getCategories: () => api.get('/content/categories'),
-  
-  searchContent: (query: string) => api.get(`/content/search?q=${query}`),
-  
-  getRecommendations: () => api.get('/content/recommendations'),
-  
-  getContent: (id: number) => api.get(`/content/${id}`),
-  
-  markComplete: (id: number) => api.post(`/content/${id}/complete`),
+  getCategories: () => lessonAPI.getSubjects(),
+  searchContent: (query: string) => api.get(`/lessons/search?q=${query}`),
+  getRecommendations: () => lessonAPI.getRecommendations(),
+  getContent: (id: number) => api.get(`/lessons/${id}`),
+  markComplete: (id: number) => api.post(`/lessons/${id}/complete`),
 };
 
-// Learning session API calls
 export const learningAPI = {
   createSession: (data: { content_id?: number; session_type: string }) =>
-    api.post('/demo/learning/sessions', data), // Using demo endpoint
+    api.post('/learning/sessions', data),
   
   generateLesson: (data: { subject: string; topic: string; difficulty_level?: string }) =>
-    api.post('/demo/learning/generate-lesson', data), // New AI lesson generation
+    lessonAPI.generateLesson(data),
   
   getSession: (id: number) => api.get(`/learning/sessions/${id}`),
-  
-  getSessions: () => api.get('/demo/learning/sessions'), // Using demo endpoint
+  getSessions: () => lessonAPI.getLessonHistory(),
   
   logInteraction: (sessionId: number, data: any) =>
     api.post(`/learning/sessions/${sessionId}/interactions`, data),
@@ -96,74 +183,17 @@ export const learningAPI = {
   completeSession: (id: number, data?: any) =>
     api.post(`/learning/sessions/${id}/complete`, data),
   
-  getAnalytics: () => api.get('/learning/analytics'),
+  getAnalytics: () => dashboardAPI.getProgressChart(),
 };
 
-// Progress API calls
 export const progressAPI = {
-  getOverview: () => api.get('/demo/progress/overview'), // Using demo endpoint
-  
-  getDetailed: (params?: any) => api.get('/progress/detailed', { params }),
-  
-  getSubjectProgress: () => api.get('/progress/subjects'),
-  
-  getMasteryMap: () => api.get('/progress/mastery-map'),
-  
-  getLearningPath: () => api.get('/progress/learning-path'),
-  
+  getOverview: () => dashboardAPI.getOverview(),
+  getDetailed: (params?: any) => dashboardAPI.getProgressChart(),
+  getSubjectProgress: () => dashboardAPI.getSubjectBreakdown(),
+  getMasteryMap: () => dashboardAPI.getOverview(),
+  getLearningPath: () => lessonAPI.getRecommendations(),
   getAnalytics: (period: string = 'week') =>
-    api.get(`/progress/analytics?period=${period}`),
-};
-
-// AI Tutor API calls
-export const aiTutorAPI = {
-  chat: (message: string, sessionId?: number) =>
-    api.post('/demo/ai-tutor/chat', { message, session_id: sessionId }), // Using demo endpoint
-  
-  generateExercises: (topic: string, difficulty?: string) =>
-    api.post('/ai-tutor/exercises', { topic, difficulty }),
-  
-  submitAnswer: (exerciseId: number, answer: string) =>
-    api.post('/ai-tutor/submit-answer', { exercise_id: exerciseId, answer }),
-  
-  getRecommendations: () => api.get('/ai-tutor/recommendations'),
-  
-  getSuggestions: () => api.get('/demo/ai-tutor/suggestions'), // Using demo endpoint
-};
-
-// Quiz API calls
-export const quizAPI = {
-  generateQuiz: (data: { subject: string; topic: string; difficulty_level?: string; num_questions?: number }) =>
-    api.post('/demo/quiz/generate', data), // New AI quiz generation
-  
-  createAttempt: (quizData: {
-    quiz_title: string;
-    subject_area?: string;
-    topic?: string;
-    difficulty_level?: number;
-    questions: Array<{
-      question_id: string;
-      question_text: string;
-      answer_options: string[];
-      correct_answer: string;
-      explanation?: string;
-      difficulty_level?: number;
-    }>;
-  }) => api.post('/demo/quiz/quiz-attempts', quizData), // Using demo endpoint
-  
-  getAttempts: () => api.get('/demo/quiz/quiz-attempts'), // Using demo endpoint
-  
-  getAttempt: (attemptId: number) => api.get(`/demo/quiz/quiz-attempts/${attemptId}`), // Using demo endpoint
-  
-  submitAnswer: (attemptId: number, answerData: {
-    question_id: string;
-    student_answer: string;
-    response_time_seconds?: number;
-  }) => api.post(`/demo/quiz/quiz-attempts/${attemptId}/submit-answer`, answerData), // Using demo endpoint
-  
-  completeAttempt: (attemptId: number) => api.post(`/demo/quiz/quiz-attempts/${attemptId}/complete`), // Using demo endpoint
-  
-  getResults: (attemptId: number) => api.get(`/demo/quiz/quiz-attempts/${attemptId}/results`), // Using demo endpoint
+    dashboardAPI.getProgressChart(period),
 };
 
 export default api;

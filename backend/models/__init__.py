@@ -7,6 +7,15 @@ from .learning_session import LearningSession, SessionInteraction
 from .content import Content, ContentCategory, LearningObjective
 from .progress import Progress, ProgressTracker, EngagementMetrics
 from .quiz_attempt import QuizAttempt, QuizQuestionResponse
+from .user_analytics import (
+    UserProgress, 
+    LessonCompletion, 
+    QuizAttemptRecord, 
+    StudySession, 
+    LearningGoal, 
+    UserAchievement, 
+    WeeklyReport
+)
 
 __all__ = [
     "User",
@@ -21,5 +30,12 @@ __all__ = [
     "ProgressTracker",
     "EngagementMetrics",
     "QuizAttempt",
-    "QuizQuestionResponse"
+    "QuizQuestionResponse",
+    "UserProgress",
+    "LessonCompletion", 
+    "QuizAttemptRecord", 
+    "StudySession", 
+    "LearningGoal", 
+    "UserAchievement", 
+    "WeeklyReport"
 ]

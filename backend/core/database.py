@@ -61,7 +61,9 @@ def get_db() -> Generator[Session, None, None]:
 async def create_tables():
     """Create all database tables."""
     # Import all models to ensure they're registered
-    from backend.models import user, student, learning_session, content, progress
+    from backend.models import (
+        user, student, learning_session, content, progress, user_analytics
+    )
     
     # Create tables
     Base.metadata.create_all(bind=engine)

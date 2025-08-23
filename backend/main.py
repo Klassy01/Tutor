@@ -13,6 +13,7 @@ import logging
 from typing import List, Dict
 import json
 import asyncio
+from datetime import datetime
 
 # Try absolute imports first, fall back to relative imports
 try:
@@ -58,9 +59,14 @@ async def lifespan(app: FastAPI):
         logger.error(f"❌ Database initialization failed: {e}")
         logger.warning("⚠️  Continuing without database connection for testing...")
         # Don't exit - allow the server to start for frontend testing        # Initialize AI models
-        logger.info("🤖 Initializing AI models...")
-        provider_info = ai_model_manager.get_provider_info()
-        logger.info(f"Available AI providers: {provider_info['available_providers']}")
+        logger.info("🤖 Initializing educational AI models...")
+        provider_info = ai_model_manager.get_model_info()
+        logger.info(f"Available educational models: {provider_info['available_models']}")
+        logger.info(f"Educational focus: {provider_info['educational_focus']}")
+        logger.info(f"Supported content types: {provider_info['content_types']}")
+        
+        # Warm up educational models
+        await ai_model_manager.warmup_models()
         
         # Load recommendation engine index if available
         logger.info("🎯 Loading recommendation engine...")
@@ -266,23 +272,23 @@ async def websocket_tutor_endpoint(websocket: WebSocket, student_id: int):
             logger.info(f"💬 Student {student_id} message: {message_data.get('message', '')[:100]}...")
             
             # Process message through AI tutor service
-            from backend.services.enhanced_ai_tutor import enhanced_tutor_service
+            from backend.services.advanced_ai_generator import advanced_ai_generator
             
-            ai_response = await enhanced_tutor_service.get_tutoring_response(
-                message=message_data.get('message', ''),
-                student_id=student_id,
-                context=message_data.get('context', {})
+            ai_response_text = await advanced_ai_generator.generate_chat_response(
+                user_message=message_data.get('message', ''),
+                conversation_history=[],
+                subject=message_data.get('subject', 'General')
             )
             
             # Prepare response
             response = {
                 "type": "tutor_response",
-                "content": ai_response['response'],
-                "confidence": ai_response.get('confidence', 0.8),
-                "recommendations": ai_response.get('recommendations', []),
-                "follow_up_questions": ai_response.get('follow_up_questions', []),
+                "content": ai_response_text,
+                "confidence": 0.8,
+                "recommendations": [],
+                "follow_up_questions": [],
                 "student_id": student_id,
-                "timestamp": ai_response['timestamp']
+                "timestamp": datetime.now().isoformat()
             }
             
             # Send response back to student

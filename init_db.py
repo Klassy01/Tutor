@@ -1,10 +1,110 @@
 #!/usr/bin/env python3
 """
-Database initialization script for AI-Powered Personal Tutor.
-
-This script creates all necessary database tables and initializes
-the system with default data.
+Database initialization script for the Learning Tutor platform.
+Creates all tables and sets up the database structure.
 """
+
+import asyncio
+import sys
+import os
+from pathlib import Path
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent
+sys.path.insert(0, str(project_root))
+
+from sqlalchemy import create_engine, text
+from backend.core.config import settings
+from backend.core.database import Base
+from backend.models import user, student, content, learning_session, progress, user_analytics
+
+def create_database():
+    """Create the database if it doesn't exist."""
+    # Create engine without database name
+    base_url = settings.DATABASE_URL.rsplit('/', 1)[0]
+    db_name = settings.DATABASE_URL.rsplit('/', 1)[1]
+    
+    engine = create_engine(f"{base_url}/postgres")
+    
+    try:
+        with engine.connect() as conn:
+            # Check if database exists
+            result = conn.execute(
+                text("SELECT 1 FROM pg_catalog.pg_database WHERE datname = :db_name"),
+                {"db_name": db_name}
+            )
+            
+            if not result.fetchone():
+                # Database doesn't exist, create it
+                conn.execute(text("COMMIT"))  # End any transaction
+                conn.execute(text(f"CREATE DATABASE {db_name}"))
+                print(f"✅ Created database: {db_name}")
+            else:
+                print(f"✅ Database {db_name} already exists")
+                
+    except Exception as e:
+        print(f"❌ Error creating database: {e}")
+        raise
+    finally:
+        engine.dispose()
+
+def init_database():
+    """Initialize the database with all tables."""
+    try:
+        print("🔄 Initializing database...")
+        
+        # Create database if needed
+        create_database()
+        
+        # Create engine for the actual database
+        engine = create_engine(settings.DATABASE_URL)
+        
+        # Create all tables
+        print("🔄 Creating database tables...")
+        Base.metadata.create_all(bind=engine)
+        
+        print("✅ Database initialization completed!")
+        print(f"📊 Database URL: {settings.DATABASE_URL}")
+        print("
+🚀 Database is ready for the Learning Tutor platform!")
+        
+        # Print created tables
+        print("
+📋 Created tables:")
+        for table_name in Base.metadata.tables.keys():
+            print(f"  - {table_name}")
+            
+        engine.dispose()
+        
+    except Exception as e:
+        print(f"❌ Database initialization failed: {e}")
+        raise
+
+if __name__ == "__main__":
+    print("🎓 Learning Tutor - Database Initialization")
+    print("=" * 50)
+    
+    try:
+        init_database()
+        
+        print("
+" + "=" * 50)
+        print("🎉 Success! Your Learning Tutor database is ready!")
+        print("
+🔧 Next steps:")
+        print("1. Start the backend server: python -m backend.main")
+        print("2. Start the frontend: cd frontend && npm run dev")
+        print("3. Open your browser to http://localhost:3000")
+        
+    except Exception as e:
+        print(f"
+💥 Fatal error: {e}")
+        print("
+🔧 Troubleshooting tips:")
+        print("1. Make sure PostgreSQL is running")
+        print("2. Check your database connection settings")
+        print("3. Verify your database credentials")
+        sys.exit(1)
 
 import asyncio
 import sys

@@ -13,7 +13,7 @@ import random
 
 # Import with error handling
 try:
-    from transformers import pipeline, GPT2LMHeadModel, GPT2Tokenizer
+    from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
     import torch
     TRANSFORMERS_AVAILABLE = True
 except ImportError as e:
@@ -30,24 +30,44 @@ class HuggingFaceContentGenerator:
         self.initialized = False
         
     async def initialize(self):
-        """Initialize the content generator with Hugging Face models."""
+        """Initialize the content generator with powerful Hugging Face models."""
         if self.initialized:
             return
             
         try:
             if TRANSFORMERS_AVAILABLE:
-                logger.info("Initializing Hugging Face text generator...")
-                # Use a lightweight model that works well for educational content
-                self.text_generator = pipeline(
-                    "text-generation",
-                    model="distilgpt2",  # Lightweight and fast
-                    max_length=200,
-                    num_return_sequences=1,
-                    temperature=0.7,
-                    do_sample=True,
-                    pad_token_id=50256
-                )
-                logger.info("Hugging Face model initialized successfully")
+                logger.info("Initializing powerful Hugging Face models...")
+                
+                # Try to use more powerful models in order of preference
+                model_options = [
+                    "microsoft/DialoGPT-large",  # More powerful conversational model
+                    "microsoft/DialoGPT-medium", # Fallback 1
+                    "microsoft/DialoGPT-small",  # Fallback 2
+                    "distilgpt2"                 # Final fallback
+                ]
+                
+                for model_name in model_options:
+                    try:
+                        logger.info(f"Attempting to load model: {model_name}")
+                        self.text_generator = pipeline(
+                            "text-generation",
+                            model=model_name,
+                            max_length=300,  # Increased for better content
+                            num_return_sequences=1,
+                            temperature=0.7,
+                            do_sample=True,
+                            pad_token_id=50256,
+                            device=0 if torch.cuda.is_available() else -1  # Use GPU if available
+                        )
+                        logger.info(f"Successfully loaded model: {model_name}")
+                        break
+                    except Exception as e:
+                        logger.warning(f"Failed to load {model_name}: {e}")
+                        continue
+                        
+                if not self.text_generator:
+                    logger.error("Failed to load any model, will use fallback content")
+                    
             else:
                 logger.warning("Transformers not available, using fallback content generation")
                 

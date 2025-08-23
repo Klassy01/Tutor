@@ -363,29 +363,7 @@ class EducationalAIManager:
         if not self.initialized:
             await self.initialize()
         return await generate_chat_response(message, context)
-    
-    # Additional methods for compatibility with advanced_ai_generator
-    async def warmup_models(self):
-        """Warmup models - compatibility method."""
-        await self.initialize()
-    
-    async def generate_content(self, prompt: str, content_type: str = "general", **kwargs) -> str:
-        """Generate content - compatibility method."""
-        if not self.initialized:
-            await self.initialize()
-        return await generate_educational_response(prompt, content_type, **kwargs)
-    
-    async def generate_quiz_content(self, subject: str, topic: str, num_questions: int = 5) -> List[Dict[str, Any]]:
-        """Generate quiz content - compatibility method."""
-        return await self.generate_quiz(subject, topic, num_questions)
-    
-    async def generate_lesson_content(self, subject: str, topic: str, difficulty: str = "medium") -> Dict[str, Any]:
-        """Generate lesson content - compatibility method."""
-        return await self.generate_lesson(subject, topic, difficulty)
 
 
 # Global manager instance
 educational_ai_manager = EducationalAIManager()
-
-# Backward compatibility alias
-ai_model_manager = educational_ai_manager

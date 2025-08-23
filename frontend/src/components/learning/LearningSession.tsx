@@ -26,8 +26,7 @@ import {
   CircularProgress,
   Divider
 } from '@mui/material';
-import { learningAPI, quizAPI } from '../../services/api';
-import { aiQuizGenerator, type QuizGenerationRequest } from '../../services/aiQuizGenerator';
+import { learningAPI, quizAPI, lessonAPI } from '../../services/api';
 
 interface Question {
   id: string;
@@ -112,23 +111,33 @@ const LearningSession: React.FC = () => {
       if (response.data && Array.isArray(response.data)) {
         setSessions(response.data.map((session: any) => ({
           ...session,
+          id: session.id || Date.now().toString(),
+          session_type: session.session_type || 'practice',
+          subject_area: session.subject_area || 'General',
+          topic: session.topic || 'Mixed Topics',
+          status: session.status || 'active',
           difficulty_level: session.difficulty_level || 0.5,
           created_at: session.created_at || new Date().toISOString(),
+          questions_attempted: session.questions_attempted || 0,
+          questions_correct: session.questions_correct || 0,
+          accuracy_rate: session.accuracy_rate || 0
         })));
       } else {
         // Single session response, convert to array
         const session = response.data;
         setSessions([{
-          id: session.id,
-          session_type: session.session_type,
+          id: session.id || Date.now().toString(),
+          session_type: session.session_type || 'practice',
           subject_area: session.subject_area || 'General',
           topic: session.topic || 'Mixed Topics',
-          status: session.status,
+          status: session.status || 'active',
           questions_attempted: session.questions_attempted || 0,
           questions_correct: session.questions_correct || 0,
           accuracy_rate: session.accuracy_rate || 0,
           duration_minutes: session.duration_minutes || 0,
-          started_at: session.started_at
+          started_at: session.started_at || new Date().toISOString(),
+          difficulty_level: session.difficulty_level || 0.5,
+          created_at: session.created_at || new Date().toISOString()
         }]);
       }
     } catch (err) {
@@ -136,7 +145,7 @@ const LearningSession: React.FC = () => {
       // Fallback to demo session for functionality
       setSessions([
         {
-          id: 1,
+          id: '1',
           session_type: 'practice',
           subject_area: 'General Knowledge',
           topic: 'Mixed Topics',
@@ -145,7 +154,9 @@ const LearningSession: React.FC = () => {
           questions_correct: 0,
           accuracy_rate: 0,
           duration_minutes: 0,
-          started_at: new Date().toISOString()
+          started_at: new Date().toISOString(),
+          difficulty_level: 0.5,
+          created_at: new Date().toISOString()
         }
       ]);
     } finally {
@@ -158,66 +169,47 @@ const LearningSession: React.FC = () => {
       setLoading(true);
       
       // Generate AI-powered quiz based on selected topic
-      const quizRequest: QuizGenerationRequest = {
+      const quizRequest = {
         subject: newSessionData.subject_area,
         topic: newSessionData.topic,
-        difficulty: 0.5,
-        numQuestions: 4
+        difficulty_level: 'medium',
+        num_questions: 4
       };
       
-      const aiQuestions = await aiQuizGenerator.generateQuiz(quizRequest);
+      const quizResponse = await quizAPI.generateQuiz(quizRequest);
+      const quizData = quizResponse.data;
       
-      // Convert AI questions to local Question format
-      const questions: Question[] = aiQuestions.map(q => ({
-        id: q.id,
+      // Convert quiz questions to local Question format
+      const questions: Question[] = quizData.questions.map((q: any, index: number) => ({
+        id: `q_${index}`,
         question: q.question,
-        options: [q.options.A, q.options.B, q.options.C, q.options.D],
+        options: q.options || [q.option_a, q.option_b, q.option_c, q.option_d],
         correct_answer: q.correct_answer,
-        explanation: q.explanation,
-        difficulty: q.difficulty || 0.5
+        explanation: q.explanation || 'No explanation available.',
+        difficulty: q.difficulty_level || 0.5
       }));
       
       // Create session with backend
-      await learningAPI.createSession({
+      const sessionResponse = await learningAPI.createSession({
         content_id: 1,
         session_type: newSessionData.session_type
       });
       
       // Create local session with AI-generated questions
       const newSession: LearningSessionData = {
-        id: Date.now(),
-        ...newSessionData,
+        id: sessionResponse.data.id || Date.now().toString(),
+        subject_area: newSessionData.subject_area,
+        topic: newSessionData.topic,
+        session_type: newSessionData.session_type as 'lesson' | 'quiz' | 'practice',
         status: 'active',
         questions_attempted: 0,
         questions_correct: 0,
         accuracy_rate: 0,
         duration_minutes: 0,
-        started_at: new Date().toISOString()
+        started_at: new Date().toISOString(),
+        difficulty_level: 0.5,
+        created_at: new Date().toISOString()
       };
-      
-      // Create quiz attempt in backend
-      try {
-        const quizAttemptData = {
-          quiz_title: `${newSessionData.subject_area} - ${newSessionData.topic}`,
-          subject_area: newSessionData.subject_area,
-          topic: newSessionData.topic,
-          difficulty_level: 0.5,
-          questions: questions.map(q => ({
-            question_id: q.id,
-            question_text: q.question,
-            answer_options: q.options,
-            correct_answer: q.correct_answer,
-            explanation: q.explanation,
-            difficulty_level: q.difficulty
-          }))
-        };
-        
-        const quizAttemptResponse = await quizAPI.createAttempt(quizAttemptData);
-        setActiveQuizAttempt(quizAttemptResponse.data);
-      } catch (quizError) {
-        console.error('Error creating quiz attempt:', quizError);
-        // Continue without quiz tracking if there's an error
-      }
       
       setSessions(prev => [newSession, ...prev]);
       setActiveSession(newSession);
@@ -234,6 +226,7 @@ const LearningSession: React.FC = () => {
       setSuccessMessage(`AI-powered quiz created for ${newSessionData.topic}!`);
       
     } catch (err) {
+      console.error('Error creating session:', err);
       setError('Failed to create AI-powered learning session');
     } finally {
       setLoading(false);
@@ -269,22 +262,24 @@ const LearningSession: React.FC = () => {
     ));
     
     try {
-      // Submit answer to quiz tracking API if we have a quiz attempt
-      if (activeQuizAttempt) {
-        await quizAPI.submitAnswer(activeQuizAttempt.id, {
-          question_id: currentQuestion.id,
-          student_answer: selectedAnswer,
-          response_time_seconds: responseTime
+      // Submit answer to quiz API if we have a quiz attempt
+      if (activeQuizAttempt && activeQuizAttempt.id) {
+        await quizAPI.submitQuiz({
+          quiz_data: activeQuizAttempt,
+          answers: { [currentQuestion.id]: selectedAnswer },
+          time_spent_minutes: responseTime ? Math.round(responseTime / 60) : 1
         });
       }
       
       // Log interaction with backend
-      await learningAPI.logInteraction(parseInt(activeSession.id), {
-        question_id: currentQuestion.id,
-        answer: selectedAnswer,
-        is_correct: isCorrect,
-        time_spent: responseTime || 30
-      });
+      if (activeSession.id && parseInt(activeSession.id)) {
+        await learningAPI.logInteraction(parseInt(activeSession.id), {
+          question_id: currentQuestion.id,
+          answer: selectedAnswer,
+          is_correct: isCorrect,
+          time_spent: responseTime || 30
+        });
+      }
     } catch (error) {
       console.error('Error logging interaction:', error);
     }
@@ -303,9 +298,13 @@ const LearningSession: React.FC = () => {
       setQuestionStartTime(new Date()); // Track start time for new question
     } else {
       // Session complete
-      if (activeQuizAttempt) {
+      if (activeQuizAttempt && activeQuizAttempt.id) {
         try {
-          await quizAPI.completeAttempt(activeQuizAttempt.id);
+          await quizAPI.submitQuiz({
+            quiz_data: activeQuizAttempt,
+            answers: {}, // All answers have been submitted individually
+            time_spent_minutes: Math.round((new Date().getTime() - new Date(activeSession.started_at || '').getTime()) / 60000)
+          });
         } catch (error) {
           console.error('Error completing quiz attempt:', error);
         }
@@ -324,49 +323,27 @@ const LearningSession: React.FC = () => {
     const generateQuestionsForSession = async () => {
       try {
         setLoading(true);
-        const quizRequest: QuizGenerationRequest = {
+        const quizRequest = {
           subject: session.subject_area,
           topic: session.topic,
-          difficulty: 0.5,
-          numQuestions: 4
+          difficulty_level: 'medium',
+          num_questions: 4
         };
         
-        const aiQuestions = await aiQuizGenerator.generateQuiz(quizRequest);
+        const quizResponse = await quizAPI.generateQuiz(quizRequest);
+        const quizData = quizResponse.data;
         
-        // Convert AI questions to local Question format
-        const questions: Question[] = aiQuestions.map(q => ({
-          id: q.id,
+        // Convert quiz questions to local Question format
+        const questions: Question[] = quizData.questions.map((q: any, index: number) => ({
+          id: `q_${index}`,
           question: q.question,
-          options: [q.options.A, q.options.B, q.options.C, q.options.D],
+          options: q.options || [q.option_a, q.option_b, q.option_c, q.option_d],
           correct_answer: q.correct_answer,
-          explanation: q.explanation,
-          difficulty: q.difficulty || 0.5
+          explanation: q.explanation || 'No explanation available.',
+          difficulty: q.difficulty_level || 0.5
         }));
         
-        // Create quiz attempt in backend
-        try {
-          const quizAttemptData = {
-            quiz_title: `${session.subject_area} - ${session.topic}`,
-            subject_area: session.subject_area,
-            topic: session.topic,
-            difficulty_level: 0.5,
-            questions: questions.map(q => ({
-              question_id: q.id,
-              question_text: q.question,
-              answer_options: q.options,
-              correct_answer: q.correct_answer,
-              explanation: q.explanation,
-              difficulty_level: q.difficulty
-            }))
-          };
-          
-          const quizAttemptResponse = await quizAPI.createAttempt(quizAttemptData);
-          setActiveQuizAttempt(quizAttemptResponse.data);
-        } catch (quizError) {
-          console.error('Error creating quiz attempt:', quizError);
-          // Continue without quiz tracking if there's an error
-        }
-        
+        setActiveQuizAttempt({ id: quizData.quiz_id, ...quizData });
         setCurrentQuestions(questions);
         setActiveSession(session);
         setCurrentQuestion(questions[0]);
@@ -553,7 +530,7 @@ const LearningSession: React.FC = () => {
 
           <LinearProgress 
             variant="determinate" 
-            value={activeSession && currentQuestions.length > 0 ? ((activeSession.questions_attempted) / currentQuestions.length * 100) : 0}
+            value={activeSession && currentQuestions.length > 0 ? ((activeSession.questions_attempted || 0) / currentQuestions.length * 100) : 0}
             sx={{ mb: 3 }}
           />
 
@@ -659,7 +636,7 @@ const LearningSession: React.FC = () => {
                       </Typography>
                       <Box display="flex" gap={0.5}>
                         <Chip 
-                          label={session.session_type.toUpperCase()} 
+                          label={session.session_type ? session.session_type.toUpperCase() : 'PRACTICE'} 
                           color={
                             session.session_type === 'lesson' ? 'info' :
                             session.session_type === 'quiz' ? 'warning' : 'default'

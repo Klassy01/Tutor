@@ -146,7 +146,12 @@ const AITutor: React.FC = () => {
 
     try {
       // Call the backend AI tutor API
-      const response = await aiTutorAPI.chat(content);
+      const response = await aiTutorAPI.askQuickQuestion({
+        question: content,
+        subject: content.toLowerCase().includes('math') ? 'Mathematics' : 
+                 content.toLowerCase().includes('science') ? 'Science' :
+                 content.toLowerCase().includes('history') ? 'History' : undefined
+      });
       
       let aiResponse: ChatMessage;
       
@@ -184,7 +189,7 @@ const AITutor: React.FC = () => {
         // Use the response from the backend
         aiResponse = {
           id: (Date.now() + 1).toString(),
-          content: response.data.response || response.data.message || "I understand your question. Let me help you with that topic!",
+          content: response.data.response || response.data.answer || response.data.message || "I understand your question. Let me help you with that topic!",
           sender: 'ai',
           timestamp: new Date(),
           type: 'text'

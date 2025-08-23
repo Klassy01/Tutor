@@ -52,6 +52,13 @@ class User(Base):
     
     # Relationships
     student_profile = relationship("Student", back_populates="user", uselist=False)
+    progress = relationship("UserProgress", back_populates="user", uselist=False)
+    lesson_completions = relationship("LessonCompletion", back_populates="user")
+    quiz_attempts = relationship("QuizAttemptRecord", back_populates="user")
+    study_sessions = relationship("StudySession", back_populates="user")
+    learning_goals = relationship("LearningGoal", back_populates="user")
+    achievements = relationship("UserAchievement", back_populates="user")
+    weekly_reports = relationship("WeeklyReport", back_populates="user")
     
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', username='{self.username}')>"
