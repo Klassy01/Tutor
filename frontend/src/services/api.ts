@@ -83,6 +83,9 @@ export const learningAPI = {
   createSession: (data: { content_id?: number; session_type: string }) =>
     api.post('/demo/learning/sessions', data), // Using demo endpoint
   
+  generateLesson: (data: { subject: string; topic: string; difficulty_level?: string }) =>
+    api.post('/demo/learning/generate-lesson', data), // New AI lesson generation
+  
   getSession: (id: number) => api.get(`/learning/sessions/${id}`),
   
   getSessions: () => api.get('/demo/learning/sessions'), // Using demo endpoint
@@ -126,6 +129,41 @@ export const aiTutorAPI = {
   getRecommendations: () => api.get('/ai-tutor/recommendations'),
   
   getSuggestions: () => api.get('/demo/ai-tutor/suggestions'), // Using demo endpoint
+};
+
+// Quiz API calls
+export const quizAPI = {
+  generateQuiz: (data: { subject: string; topic: string; difficulty_level?: string; num_questions?: number }) =>
+    api.post('/demo/quiz/generate', data), // New AI quiz generation
+  
+  createAttempt: (quizData: {
+    quiz_title: string;
+    subject_area?: string;
+    topic?: string;
+    difficulty_level?: number;
+    questions: Array<{
+      question_id: string;
+      question_text: string;
+      answer_options: string[];
+      correct_answer: string;
+      explanation?: string;
+      difficulty_level?: number;
+    }>;
+  }) => api.post('/demo/quiz/quiz-attempts', quizData), // Using demo endpoint
+  
+  getAttempts: () => api.get('/demo/quiz/quiz-attempts'), // Using demo endpoint
+  
+  getAttempt: (attemptId: number) => api.get(`/demo/quiz/quiz-attempts/${attemptId}`), // Using demo endpoint
+  
+  submitAnswer: (attemptId: number, answerData: {
+    question_id: string;
+    student_answer: string;
+    response_time_seconds?: number;
+  }) => api.post(`/demo/quiz/quiz-attempts/${attemptId}/submit-answer`, answerData), // Using demo endpoint
+  
+  completeAttempt: (attemptId: number) => api.post(`/demo/quiz/quiz-attempts/${attemptId}/complete`), // Using demo endpoint
+  
+  getResults: (attemptId: number) => api.get(`/demo/quiz/quiz-attempts/${attemptId}/results`), // Using demo endpoint
 };
 
 export default api;

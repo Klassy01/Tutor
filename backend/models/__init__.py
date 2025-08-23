@@ -6,6 +6,7 @@ from .student import Student, StudentProfile
 from .learning_session import LearningSession, SessionInteraction
 from .content import Content, ContentCategory, LearningObjective
 from .progress import Progress, ProgressTracker, EngagementMetrics
+from .quiz_attempt import QuizAttempt, QuizQuestionResponse
 
 __all__ = [
     "User",
@@ -18,5 +19,7 @@ __all__ = [
     "LearningObjective",
     "Progress",
     "ProgressTracker",
-    "EngagementMetrics"
+    "EngagementMetrics",
+    "QuizAttempt",
+    "QuizQuestionResponse"
 ]

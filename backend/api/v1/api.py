@@ -14,7 +14,8 @@ from backend.api.v1.endpoints import (
     learning,
     progress,
     ai_tutor,
-    demo
+    demo,
+    quiz
 )
 
 api_router = APIRouter()
@@ -26,4 +27,5 @@ api_router.include_router(content.router, prefix="/content", tags=["content"])
 api_router.include_router(learning.router, prefix="/learning", tags=["learning"])
 api_router.include_router(progress.router, prefix="/progress", tags=["progress"])
 api_router.include_router(ai_tutor.router, prefix="/ai-tutor", tags=["ai-tutor"])
+api_router.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
 api_router.include_router(demo.router, prefix="/demo", tags=["demo"])

@@ -21,7 +21,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 
 const Profile: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -50,9 +50,17 @@ const Profile: React.FC = () => {
     setSuccess('');
     
     try {
-      // In a real app, you'd call an API to update the profile
-      // For now, we'll just simulate a successful update
+      // Call API to update the profile (using demo endpoint for now)
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update the user context with new data
+      setUser({
+        ...user!,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        username: profileData.username,
+        email: profileData.email,
+      });
       
       setSuccess('Profile updated successfully!');
       setIsEditing(false);

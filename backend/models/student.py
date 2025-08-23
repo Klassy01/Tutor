@@ -70,6 +70,7 @@ class Student(Base):
     learning_sessions = relationship("LearningSession", back_populates="student")
     progress_records = relationship("Progress", back_populates="student")
     engagement_metrics = relationship("EngagementMetrics", back_populates="student")
+    quiz_attempts = relationship("QuizAttempt", back_populates="student")
     
     def __repr__(self):
         return f"<Student(id={self.id}, user_id={self.user_id}, level={self.current_difficulty_level})>"

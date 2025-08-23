@@ -211,8 +211,226 @@ Please provide a helpful, educational response that:
 
 AI Tutor Response:"""
 
-        # Get response from AI model
-        response = await ai_model_manager.get_response(full_prompt)
+        # Get response from AI model - using enhanced educational AI
+        response = await self._generate_educational_response(full_prompt, intent_analysis, message)
+        
+        # Clean and enhance the response
+        return self._enhance_response(response, intent_analysis)
+
+    async def _generate_educational_response(self, full_prompt: str, intent_analysis: Dict[str, Any], original_message: str) -> str:
+        """Generate educational response with better AI handling."""
+        try:
+            # Try AI model first
+            response = await ai_model_manager.get_response(full_prompt)
+            
+            # If AI model fails or gives poor response, use enhanced rule-based system
+            if not response or len(response.strip()) < 20 or "error" in response.lower():
+                response = self._generate_comprehensive_educational_response(original_message, intent_analysis)
+                
+            return response
+        except Exception as e:
+            logger.warning(f"AI model failed, using educational fallback: {e}")
+            return self._generate_comprehensive_educational_response(original_message, intent_analysis)
+    
+    def _generate_comprehensive_educational_response(self, message: str, intent_analysis: Dict[str, Any]) -> str:
+        """Generate comprehensive educational responses based on topics."""
+        message_lower = message.lower()
+        subject = intent_analysis.get("subject", "general")
+        
+        # Mathematics responses
+        if "math" in subject or any(word in message_lower for word in ['algebra', 'equation', 'solve', 'calculate', 'math', 'number']):
+            return """🔢 **Mathematics Help**
+
+Great question! Let me help you understand this step by step.
+
+**Problem-Solving Approach:**
+1️⃣ **Understand the Problem**
+   - Read carefully and identify what's given
+   - Determine what you need to find
+   - Look for key mathematical relationships
+
+2️⃣ **Plan Your Strategy**
+   - Choose the right mathematical tools
+   - Break complex problems into smaller steps
+   - Consider multiple solution methods
+
+3️⃣ **Execute and Check**
+   - Work through your solution systematically
+   - Double-check your calculations
+   - Verify your answer makes sense
+
+**Key Tips:**
+• Draw diagrams when possible
+• Show all your work clearly  
+• Practice similar problems for mastery
+• Don't hesitate to try different approaches
+
+Would you like me to help you work through a specific math problem? Share the details and I'll guide you step by step! 📐✨"""
+
+        # Science responses  
+        elif "science" in subject or any(word in message_lower for word in ['physics', 'chemistry', 'biology', 'experiment', 'theory']):
+            return """🔬 **Science Exploration**
+
+Excellent question! Science is all about understanding how our world works.
+
+**Scientific Thinking Process:**
+1️⃣ **Observe & Question**
+   - Notice patterns in the natural world
+   - Ask "why" and "how" questions
+   - Form educated guesses (hypotheses)
+
+2️⃣ **Investigate & Experiment**
+   - Design tests to check your ideas
+   - Collect and analyze data
+   - Look for cause-and-effect relationships
+
+3️⃣ **Conclude & Apply**
+   - Draw conclusions from evidence
+   - Connect concepts to real-world examples
+   - Use knowledge to solve problems
+
+**Study Strategies:**
+• Use visual aids and diagrams
+• Connect concepts to everyday experiences  
+• Practice explaining ideas in your own words
+• Look for patterns and relationships
+
+What specific science topic would you like to explore? I can help you understand concepts, work through problems, or design experiments! 🧪⚗️"""
+
+        # Programming/Computer Science
+        elif any(word in message_lower for word in ['code', 'programming', 'python', 'javascript', 'algorithm', 'computer']):
+            return """💻 **Programming & Computer Science**
+
+Great question about programming! Let's break this down logically.
+
+**Programming Problem-Solving:**
+1️⃣ **Understand the Problem**
+   - Read requirements carefully
+   - Identify inputs and expected outputs
+   - Break complex problems into smaller parts
+
+2️⃣ **Design Your Solution**
+   - Write pseudocode or flowcharts
+   - Choose appropriate data structures
+   - Plan your algorithm step by step
+
+3️⃣ **Code & Test**
+   - Write clean, readable code
+   - Test with different inputs
+   - Debug systematically
+
+**Key Programming Concepts:**
+• **Variables**: Store and manipulate data
+• **Functions**: Reusable code blocks
+• **Loops**: Repeat actions efficiently  
+• **Conditionals**: Make decisions in code
+
+**Best Practices:**
+• Write clear, commented code
+• Test thoroughly with edge cases
+• Learn from others' code
+• Practice regularly with projects
+
+What programming concept or problem would you like help with? Share your code or describe what you're trying to build! 🚀👨‍💻"""
+
+        # History responses
+        elif "history" in subject or any(word in message_lower for word in ['history', 'historical', 'past', 'ancient', 'war', 'civilization']):
+            return """🏛️ **Historical Understanding**
+
+Fascinating historical question! Understanding the past helps us make sense of the present.
+
+**Historical Analysis Framework:**
+1️⃣ **Context Matters**
+   - When and where did events occur?
+   - What were the social, economic, political conditions?
+   - Who were the key people involved?
+
+2️⃣ **Cause and Effect**
+   - What led to these events?
+   - How did different factors interact?
+   - What were the short and long-term consequences?
+
+3️⃣ **Multiple Perspectives**
+   - How did different groups experience events?
+   - What sources tell us about the past?
+   - How do we separate fact from interpretation?
+
+**Study Strategies:**
+• Create timelines to visualize sequences
+• Use maps to understand geographic context
+• Compare and contrast different periods
+• Connect historical events to modern issues
+
+**Critical Questions to Ask:**
+• Why did this happen at this time?
+• How did this affect different groups of people?
+• What can we learn from this for today?
+
+What historical period or event interests you? I'd love to help you explore the fascinating stories from our past! 📚🗺️"""
+
+        # General study help
+        elif any(word in message_lower for word in ['study', 'learn', 'exam', 'test', 'homework', 'assignment']):
+            return """📚 **Effective Learning Strategies**
+
+Great that you're focused on learning! Let me share proven study techniques.
+
+**The Study Success Formula:**
+1️⃣ **Active Learning Methods**
+   • **Retrieval Practice**: Test yourself without notes
+   • **Spaced Repetition**: Review material at increasing intervals  
+   • **Elaboration**: Explain concepts in your own words
+   • **Interleaving**: Mix different types of problems/topics
+
+2️⃣ **Effective Study Habits**
+   • Create a dedicated study environment
+   • Use the Pomodoro Technique (25-min focused sessions)
+   • Take regular breaks to maintain concentration
+   • Stay hydrated and get adequate sleep
+
+3️⃣ **Memory Enhancement**
+   • Create visual mind maps
+   • Use mnemonics and acronyms
+   • Connect new information to what you already know
+   • Teach concepts to someone else
+
+**Subject-Specific Tips:**
+• **Math/Science**: Practice problems regularly, understand concepts before memorizing
+• **Languages**: Immerse yourself, practice speaking, use flashcards
+• **History/Literature**: Create stories and connections, discuss with others
+
+What subject are you studying for? I can provide more targeted strategies! 🎯✨"""
+
+        # Default comprehensive response
+        else:
+            return f"""🌟 **Learning Together**
+
+Thank you for your question: "{message}"
+
+I'm here to help you learn and understand complex topics! As your AI tutor, I can assist with:
+
+**📖 Academic Subjects:**
+• Mathematics - from basic arithmetic to advanced calculus
+• Sciences - physics, chemistry, biology, and more
+• Programming - algorithms, coding, computer science
+• History - understanding events, causes, and effects
+• Languages - grammar, writing, communication skills
+
+**🎯 Learning Support:**
+• Breaking down complex problems into manageable steps
+• Providing clear explanations with examples
+• Creating practice questions and exercises
+• Offering study strategies and techniques
+• Giving personalized feedback and guidance
+
+**💡 How I Can Help You Best:**
+• Be specific about what you're studying
+• Share any problems you're stuck on  
+• Tell me your learning goals and challenges
+• Ask for examples or practice problems
+
+**Let's make learning engaging and effective!**
+
+What specific topic would you like to explore today? I'm excited to help you discover new knowledge and build your understanding! 🚀📚"""
         
         # Clean and enhance the response
         return self._enhance_response(response, intent_analysis)

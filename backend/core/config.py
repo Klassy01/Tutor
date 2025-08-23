@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:8080"
     
     # Database settings
-    DATABASE_URL: str = "postgresql://user:password@localhost/dbname"
+    DATABASE_URL: str = "postgresql://klassy:MioNuG8fcHpCU6tVBoJW0rhdFSjLT6as@dpg-d29o447diees73d0ltl0-a.singapore-postgres.render.com/daviddb_c0ni"
     DATABASE_ECHO: bool = False
     
     # Redis settings

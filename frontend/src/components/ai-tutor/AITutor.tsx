@@ -25,6 +25,8 @@ import {
   History as HistoryIcon
 } from '@mui/icons-material';
 
+import { aiTutorAPI } from '../../services/api';
+
 interface ChatMessage {
   id: string;
   content: string;
@@ -143,8 +145,8 @@ const AITutor: React.FC = () => {
     setShowSuggestions(false);
 
     try {
-      // Simulate API call to AI tutor
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate processing time
+      // Call the backend AI tutor API
+      const response = await aiTutorAPI.chat(content);
       
       let aiResponse: ChatMessage;
       
@@ -173,64 +175,16 @@ const AITutor: React.FC = () => {
         
         aiResponse = {
           id: (Date.now() + 1).toString(),
-          content: "I've created a practice quiz for you! Click on the quiz dialog to start. The quiz covers the topic we discussed.",
+          content: response.data.response || "I've created a practice quiz for you! Click on the quiz dialog to start. The quiz covers the topic we discussed.",
           sender: 'ai',
           timestamp: new Date(),
           type: 'quiz'
         };
       } else {
-        // Generate contextual response based on the question
-        let responseContent = '';
-        
-        if (content.toLowerCase().includes('math') || content.toLowerCase().includes('algebra')) {
-          responseContent = `Great question about mathematics! Let me help you understand this concept step by step:
-
-1. **Identify the problem type**: First, we need to recognize what kind of mathematical problem we're dealing with.
-
-2. **Apply the right method**: Each type of problem has specific approaches and formulas.
-
-3. **Work through examples**: Let's practice with a concrete example to make it clearer.
-
-Would you like me to create a practice problem for you to work through together?`;
-        } else if (content.toLowerCase().includes('science') || content.toLowerCase().includes('physics')) {
-          responseContent = `Excellent science question! Let me break this down in a way that's easy to understand:
-
-**Key Concepts:**
-- Scientific principles work through observable patterns
-- We can understand complex phenomena by breaking them into simpler parts
-- Real-world applications help us see why this matters
-
-I'd be happy to explain this topic in more detail or provide some hands-on examples. What specific aspect interests you most?`;
-        } else if (content.toLowerCase().includes('history')) {
-          responseContent = `That's a fascinating historical topic! Understanding history helps us learn from the past:
-
-**Context is Key:**
-- Historical events don't happen in isolation
-- Multiple factors often contribute to major changes
-- Different perspectives help us understand the full picture
-
-**Why This Matters:**
-- Historical patterns can help us understand current events
-- Learning about different cultures and time periods broadens our worldview
-
-Would you like me to dive deeper into a specific aspect or time period?`;
-        } else {
-          responseContent = `I understand you're asking about "${content}". Let me help you with that!
-
-This is a great question that touches on several important concepts. Here's how I'd approach explaining this:
-
-**Main Points:**
-- Let's start with the fundamentals
-- Build understanding step by step
-- Connect it to things you already know
-- Practice with examples
-
-Is there a particular aspect you'd like me to focus on? I can adjust my explanation based on what you find most challenging or interesting.`;
-        }
-        
+        // Use the response from the backend
         aiResponse = {
           id: (Date.now() + 1).toString(),
-          content: responseContent,
+          content: response.data.response || response.data.message || "I understand your question. Let me help you with that topic!",
           sender: 'ai',
           timestamp: new Date(),
           type: 'text'
@@ -240,8 +194,64 @@ Is there a particular aspect you'd like me to focus on? I can adjust my explanat
       setMessages(prev => [...prev, aiResponse]);
       
     } catch (err) {
-      setError('Failed to get response from AI tutor. Please try again.');
-      console.error('Error sending message:', err);
+      console.error('Error calling AI tutor API:', err);
+      
+      // Fallback to demo response if API fails
+      let aiResponse: ChatMessage;
+      
+      if (content.toLowerCase().includes('math') || content.toLowerCase().includes('algebra')) {
+        aiResponse = {
+          id: (Date.now() + 1).toString(),
+          content: `Great question about mathematics! Let me help you understand this concept step by step:
+
+1. **Identify the problem type**: First, we need to recognize what kind of mathematical problem we're dealing with.
+
+2. **Apply the right method**: Each type of problem has specific approaches and formulas.
+
+3. **Work through examples**: Let's practice with a concrete example to make it clearer.
+
+Would you like me to create a practice problem for you to work through together?`,
+          sender: 'ai',
+          timestamp: new Date(),
+          type: 'text'
+        };
+      } else if (content.toLowerCase().includes('science') || content.toLowerCase().includes('physics')) {
+        aiResponse = {
+          id: (Date.now() + 1).toString(),
+          content: `Excellent science question! Let me break this down in a way that's easy to understand:
+
+**Key Concepts:**
+- Scientific principles work through observable patterns
+- We can understand complex phenomena by breaking them into simpler parts
+- Real-world applications help us see why this matters
+
+I'd be happy to explain this topic in more detail or provide some hands-on examples. What specific aspect interests you most?`,
+          sender: 'ai',
+          timestamp: new Date(),
+          type: 'text'
+        };
+      } else {
+        aiResponse = {
+          id: (Date.now() + 1).toString(),
+          content: `I understand you're asking about "${content}". Let me help you with that!
+
+This is a great question that touches on several important concepts. Here's how I'd approach explaining this:
+
+**Main Points:**
+- Let's start with the fundamentals
+- Build understanding step by step
+- Connect it to things you already know
+- Practice with examples
+
+Is there a particular aspect you'd like me to focus on? I can adjust my explanation based on what you find most challenging or interesting.`,
+          sender: 'ai',
+          timestamp: new Date(),
+          type: 'text'
+        };
+      }
+      
+      setMessages(prev => [...prev, aiResponse]);
+      setError('AI Tutor is running in offline mode. Some features may be limited.');
     } finally {
       setIsTyping(false);
     }

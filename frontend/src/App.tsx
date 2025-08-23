@@ -15,133 +15,96 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#6366f1', // Modern indigo
-      light: '#818cf8',
-      dark: '#4f46e5',
+      main: '#1976d2', // LeetCode-style blue
+      light: '#42a5f5',
+      dark: '#1565c0',
     },
     secondary: {
-      main: '#f59e0b', // Modern amber
-      light: '#fbbf24',
-      dark: '#d97706',
+      main: '#00c853', // LeetCode green for success
+      light: '#4caf50',
+      dark: '#00a84f',
     },
     success: {
-      main: '#10b981',
-      light: '#34d399',
-      dark: '#059669',
+      main: '#00c853', // Green for correct answers
+      light: '#4caf50',
+      dark: '#00a84f',
     },
     error: {
-      main: '#ef4444',
-      light: '#f87171',
-      dark: '#dc2626',
+      main: '#f44336', // Red for incorrect answers
+      light: '#ef5350',
+      dark: '#d32f2f',
     },
     warning: {
-      main: '#f59e0b',
-      light: '#fbbf24',
-      dark: '#d97706',
+      main: '#ff9800', // Orange for warnings/medium difficulty
+      light: '#ffb74d',
+      dark: '#f57c00',
     },
     info: {
-      main: '#3b82f6',
-      light: '#60a5fa',
-      dark: '#2563eb',
+      main: '#2196f3', // Blue for info
+      light: '#64b5f6',
+      dark: '#1976d2',
     },
     background: {
-      default: '#f8fafc',
+      default: '#f7f8fa', // Light gray background like LeetCode
       paper: '#ffffff',
     },
     text: {
-      primary: '#1e293b',
-      secondary: '#64748b',
+      primary: '#262626', // Dark gray text
+      secondary: '#595959', // Medium gray text
     },
+    divider: '#e8e8e8', // Light gray dividers
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif', // Modern font stack
     h1: {
       fontWeight: 700,
       fontSize: '2.5rem',
-      lineHeight: 1.2,
-      '@media (max-width:600px)': {
-        fontSize: '2rem',
-      },
     },
     h2: {
       fontWeight: 600,
       fontSize: '2rem',
-      lineHeight: 1.3,
-      '@media (max-width:600px)': {
-        fontSize: '1.75rem',
-      },
     },
     h3: {
       fontWeight: 600,
-      fontSize: '1.5rem',
-      lineHeight: 1.4,
-      '@media (max-width:600px)': {
-        fontSize: '1.25rem',
-      },
+      fontSize: '1.75rem',
     },
     h4: {
       fontWeight: 600,
-      fontSize: '1.25rem',
-      lineHeight: 1.4,
-      '@media (max-width:600px)': {
-        fontSize: '1.125rem',
-      },
+      fontSize: '1.5rem',
     },
     h5: {
       fontWeight: 600,
-      fontSize: '1.125rem',
-      lineHeight: 1.4,
-      '@media (max-width:600px)': {
-        fontSize: '1rem',
-      },
+      fontSize: '1.25rem',
     },
     h6: {
       fontWeight: 600,
-      fontSize: '1rem',
-      lineHeight: 1.4,
+      fontSize: '1.125rem',
     },
     body1: {
       fontSize: '1rem',
       lineHeight: 1.6,
-      '@media (max-width:600px)': {
-        fontSize: '0.9rem',
-      },
     },
     body2: {
       fontSize: '0.875rem',
-      lineHeight: 1.6,
-      '@media (max-width:600px)': {
-        fontSize: '0.8rem',
-      },
+      lineHeight: 1.5,
     },
   },
   shape: {
-    borderRadius: 12,
-  },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 960,
-      lg: 1280,
-      xl: 1920,
-    },
+    borderRadius: 8, // More rounded corners like LeetCode
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none',
+          textTransform: 'none', // No uppercase transformation
           fontWeight: 600,
           borderRadius: 8,
-          padding: '10px 20px',
+          padding: '8px 16px',
+        },
+        contained: {
           boxShadow: 'none',
           '&:hover': {
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
-          },
-          '@media (max-width:600px)': {
-            padding: '8px 16px',
-            fontSize: '0.875rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           },
         },
       },
@@ -149,48 +112,44 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
-          border: '1px solid #e2e8f0',
-          '@media (max-width:600px)': {
-            borderRadius: 12,
-            margin: '8px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          borderRadius: 12,
+          '&:hover': {
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
           },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 500,
+          borderRadius: 6,
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           borderRadius: 12,
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
-          '@media (max-width:600px)': {
-            borderRadius: 8,
-          },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid #e8e8e8',
         },
       },
     },
     MuiTextField: {
       styleOverrides: {
         root: {
-          '@media (max-width:600px)': {
-            '& .MuiInputLabel-root': {
-              fontSize: '0.875rem',
-            },
-            '& .MuiOutlinedInput-input': {
-              fontSize: '0.875rem',
-              padding: '12px 14px',
-            },
-          },
-        },
-      },
-    },
-    MuiContainer: {
-      styleOverrides: {
-        root: {
-          '@media (max-width:600px)': {
-            paddingLeft: '16px',
-            paddingRight: '16px',
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 8,
           },
         },
       },
@@ -203,7 +162,10 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <Router>
+        <Router future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true
+        }}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

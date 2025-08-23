@@ -26,7 +26,7 @@ import {
   CircularProgress,
   Divider
 } from '@mui/material';
-import { learningAPI } from '../../services/api';
+import { learningAPI, quizAPI } from '../../services/api';
 import { aiQuizGenerator, type QuizGenerationRequest } from '../../services/aiQuizGenerator';
 
 interface Question {
@@ -35,20 +35,39 @@ interface Question {
   options: string[];
   correct_answer: string;
   explanation: string;
-  difficulty: number;
+  difficulty?: number;
+}
+
+interface LessonContent {
+  title: string;
+  introduction: string;
+  key_concepts: string[];
+  examples: Array<{
+    [key: string]: any;
+  }>;
 }
 
 interface LearningSessionData {
-  id: number;
-  session_type: string;
+  id: string;
+  session_type: 'lesson' | 'quiz' | 'practice';
   subject_area: string;
   topic: string;
   status: string;
-  questions_attempted: number;
-  questions_correct: number;
-  accuracy_rate: number;
-  duration_minutes: number;
-  started_at: string;
+  // Lesson-specific properties
+  content?: LessonContent;
+  duration_estimate?: number;
+  // Quiz-specific properties  
+  questions?: Question[];
+  total_questions?: number;
+  time_limit_minutes?: number;
+  // Common properties
+  questions_attempted?: number;
+  questions_correct?: number;
+  accuracy_rate?: number;
+  duration_minutes?: number;
+  started_at?: string;
+  difficulty_level: number;
+  created_at: string;
 }
 
 const LearningSession: React.FC = () => {
@@ -64,6 +83,10 @@ const LearningSession: React.FC = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // State for quiz tracking
+  const [activeQuizAttempt, setActiveQuizAttempt] = useState<any>(null);
+  const [questionStartTime, setQuestionStartTime] = useState<Date | null>(null);
+
   // Create session dialog state
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newSessionData, setNewSessionData] = useState({
@@ -72,88 +95,8 @@ const LearningSession: React.FC = () => {
     session_type: 'practice'
   });
 
-  // Sample questions for different topics
-  const getQuestionsForTopic = (subjectArea: string, topic: string): Question[] => {
-    const topicLower = topic.toLowerCase();
-    const subjectLower = subjectArea.toLowerCase();
-    
-    if (subjectLower.includes('artificial intelligence') || subjectLower.includes('ai') || topicLower.includes('machine learning') || topicLower.includes('ml')) {
-      return [
-        {
-          id: '1',
-          question: 'What is the primary goal of machine learning?',
-          options: [
-            'To replace human intelligence completely',
-            'To enable computers to learn and make decisions from data',
-            'To create robots that look like humans',
-            'To store large amounts of data'
-          ],
-          correct_answer: 'To enable computers to learn and make decisions from data',
-          explanation: 'Machine learning aims to enable computers to automatically learn and improve from experience without being explicitly programmed for every task.',
-          difficulty: 0.4
-        },
-        {
-          id: '2',
-          question: 'What is France in the context of AI development?',
-          options: [
-            'A country with no AI research',
-            'A leading country in AI research with institutions like INRIA',
-            'Only focused on traditional computing',
-            'Has banned AI research'
-          ],
-          correct_answer: 'A leading country in AI research with institutions like INRIA',
-          explanation: 'France is a major player in AI research, home to institutions like INRIA (French Institute for Research in Computer Science and Automation) and has significant government investment in AI initiatives.',
-          difficulty: 0.3
-        },
-        {
-          id: '3',
-          question: 'Which of these is a supervised learning algorithm?',
-          options: [
-            'K-means clustering',
-            'Linear regression',
-            'Principal Component Analysis',
-            'Autoencoders'
-          ],
-          correct_answer: 'Linear regression',
-          explanation: 'Linear regression is a supervised learning algorithm that learns from labeled training data to predict continuous output values.',
-          difficulty: 0.5
-        },
-        {
-          id: '4',
-          question: 'What does "AI" stand for?',
-          options: [
-            'Advanced Intelligence',
-            'Artificial Intelligence',
-            'Automated Information',
-            'Algorithmic Innovation'
-          ],
-          correct_answer: 'Artificial Intelligence',
-          explanation: 'AI stands for Artificial Intelligence - the simulation of human intelligence in machines that are programmed to think and learn.',
-          difficulty: 0.1
-        }
-      ];
-    }
-    
-    // Default questions for other topics
-    return [
-      {
-        id: '1',
-        question: 'What is the capital of France?',
-        options: ['London', 'Berlin', 'Paris', 'Madrid'],
-        correct_answer: 'Paris',
-        explanation: 'Paris is the capital and most populous city of France.',
-        difficulty: 0.3
-      },
-      {
-        id: '2',
-        question: 'What is 2 + 2?',
-        options: ['3', '4', '5', '6'],
-        correct_answer: '4',
-        explanation: 'Two plus two equals four in basic arithmetic.',
-        difficulty: 0.1
-      }
-    ];
-  };
+  // Sample questions for different topics (fallback only)
+  
 
   useEffect(() => {
     fetchSessions();
@@ -168,16 +111,9 @@ const LearningSession: React.FC = () => {
       
       if (response.data && Array.isArray(response.data)) {
         setSessions(response.data.map((session: any) => ({
-          id: session.id,
-          session_type: session.session_type,
-          subject_area: session.subject_area || 'General',
-          topic: session.topic || 'Mixed Topics',
-          status: session.status,
-          questions_attempted: session.questions_attempted || 0,
-          questions_correct: session.questions_correct || 0,
-          accuracy_rate: session.accuracy_rate || 0,
-          duration_minutes: session.duration_minutes || 0,
-          started_at: session.started_at
+          ...session,
+          difficulty_level: session.difficulty_level || 0.5,
+          created_at: session.created_at || new Date().toISOString(),
         })));
       } else {
         // Single session response, convert to array
@@ -225,7 +161,7 @@ const LearningSession: React.FC = () => {
       const quizRequest: QuizGenerationRequest = {
         subject: newSessionData.subject_area,
         topic: newSessionData.topic,
-        difficulty: 0.5, // Convert to number
+        difficulty: 0.5,
         numQuestions: 4
       };
       
@@ -259,6 +195,30 @@ const LearningSession: React.FC = () => {
         started_at: new Date().toISOString()
       };
       
+      // Create quiz attempt in backend
+      try {
+        const quizAttemptData = {
+          quiz_title: `${newSessionData.subject_area} - ${newSessionData.topic}`,
+          subject_area: newSessionData.subject_area,
+          topic: newSessionData.topic,
+          difficulty_level: 0.5,
+          questions: questions.map(q => ({
+            question_id: q.id,
+            question_text: q.question,
+            answer_options: q.options,
+            correct_answer: q.correct_answer,
+            explanation: q.explanation,
+            difficulty_level: q.difficulty
+          }))
+        };
+        
+        const quizAttemptResponse = await quizAPI.createAttempt(quizAttemptData);
+        setActiveQuizAttempt(quizAttemptResponse.data);
+      } catch (quizError) {
+        console.error('Error creating quiz attempt:', quizError);
+        // Continue without quiz tracking if there's an error
+      }
+      
       setSessions(prev => [newSession, ...prev]);
       setActiveSession(newSession);
       
@@ -266,6 +226,7 @@ const LearningSession: React.FC = () => {
       setCurrentQuestions(questions);
       if (questions.length > 0) {
         setCurrentQuestion(questions[0]);
+        setQuestionStartTime(new Date()); // Start timing the first question
       }
       
       setCreateDialogOpen(false);
@@ -287,12 +248,17 @@ const LearningSession: React.FC = () => {
     setShowResults(true);
     setExplanation(currentQuestion.explanation);
     
+    // Calculate response time if we tracked question start
+    const responseTime = questionStartTime 
+      ? (new Date().getTime() - questionStartTime.getTime()) / 1000 
+      : undefined;
+    
     // Update session progress
     const updatedSession = {
       ...activeSession,
-      questions_attempted: activeSession.questions_attempted + 1,
-      questions_correct: activeSession.questions_correct + (isCorrect ? 1 : 0),
-      accuracy_rate: ((activeSession.questions_correct + (isCorrect ? 1 : 0)) / (activeSession.questions_attempted + 1)) * 100
+      questions_attempted: (activeSession.questions_attempted || 0) + 1,
+      questions_correct: (activeSession.questions_correct || 0) + (isCorrect ? 1 : 0),
+      accuracy_rate: (((activeSession.questions_correct || 0) + (isCorrect ? 1 : 0)) / ((activeSession.questions_attempted || 0) + 1)) * 100
     };
     
     setActiveSession(updatedSession);
@@ -303,19 +269,28 @@ const LearningSession: React.FC = () => {
     ));
     
     try {
+      // Submit answer to quiz tracking API if we have a quiz attempt
+      if (activeQuizAttempt) {
+        await quizAPI.submitAnswer(activeQuizAttempt.id, {
+          question_id: currentQuestion.id,
+          student_answer: selectedAnswer,
+          response_time_seconds: responseTime
+        });
+      }
+      
       // Log interaction with backend
-      await learningAPI.logInteraction(activeSession.id, {
+      await learningAPI.logInteraction(parseInt(activeSession.id), {
         question_id: currentQuestion.id,
         answer: selectedAnswer,
         is_correct: isCorrect,
-        time_spent: 30 // You could track actual time spent
+        time_spent: responseTime || 30
       });
     } catch (error) {
       console.error('Error logging interaction:', error);
     }
   };
   
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (!activeSession || !currentQuestions.length) return;
     
     const currentIndex = currentQuestions.findIndex(q => q.id === currentQuestion?.id);
@@ -325,16 +300,26 @@ const LearningSession: React.FC = () => {
       setSelectedAnswer('');
       setShowResults(false);
       setExplanation('');
+      setQuestionStartTime(new Date()); // Track start time for new question
     } else {
       // Session complete
+      if (activeQuizAttempt) {
+        try {
+          await quizAPI.completeAttempt(activeQuizAttempt.id);
+        } catch (error) {
+          console.error('Error completing quiz attempt:', error);
+        }
+      }
+      
       setCurrentQuestion(null);
       setActiveSession(null);
       setCurrentQuestions([]);
+      setActiveQuizAttempt(null);
       setSuccessMessage('Session completed! Great job!');
     }
   };
 
-  const startSession = (session: LearningSessionData) => {
+  const startSession = async (session: LearningSessionData) => {
     // Generate questions for the session when starting
     const generateQuestionsForSession = async () => {
       try {
@@ -342,7 +327,7 @@ const LearningSession: React.FC = () => {
         const quizRequest: QuizGenerationRequest = {
           subject: session.subject_area,
           topic: session.topic,
-          difficulty: 0.5, // Convert to number
+          difficulty: 0.5,
           numQuestions: 4
         };
         
@@ -358,12 +343,37 @@ const LearningSession: React.FC = () => {
           difficulty: q.difficulty || 0.5
         }));
         
+        // Create quiz attempt in backend
+        try {
+          const quizAttemptData = {
+            quiz_title: `${session.subject_area} - ${session.topic}`,
+            subject_area: session.subject_area,
+            topic: session.topic,
+            difficulty_level: 0.5,
+            questions: questions.map(q => ({
+              question_id: q.id,
+              question_text: q.question,
+              answer_options: q.options,
+              correct_answer: q.correct_answer,
+              explanation: q.explanation,
+              difficulty_level: q.difficulty
+            }))
+          };
+          
+          const quizAttemptResponse = await quizAPI.createAttempt(quizAttemptData);
+          setActiveQuizAttempt(quizAttemptResponse.data);
+        } catch (quizError) {
+          console.error('Error creating quiz attempt:', quizError);
+          // Continue without quiz tracking if there's an error
+        }
+        
         setCurrentQuestions(questions);
         setActiveSession(session);
         setCurrentQuestion(questions[0]);
         setSelectedAnswer('');
         setShowResults(false);
         setExplanation('');
+        setQuestionStartTime(new Date()); // Start timing the first question
       } catch (error) {
         console.error('Error generating questions for session:', error);
         setError('Failed to generate quiz questions');
@@ -373,23 +383,6 @@ const LearningSession: React.FC = () => {
     };
     
     generateQuestionsForSession();
-  };
-
-  const completeSession = async () => {
-    if (!activeSession) return;
-    
-    try {
-      // await learningAPI.completeSession(activeSession.id);
-      const updatedSession = { ...activeSession, status: 'completed' };
-      setSessions(prev => 
-        prev.map(s => s.id === updatedSession.id ? updatedSession : s)
-      );
-      setActiveSession(null);
-      setCurrentQuestion(null);
-      setSuccessMessage('Learning session completed successfully!');
-    } catch (err) {
-      setError('Failed to complete session');
-    }
   };
 
   const pauseSession = async () => {
@@ -403,6 +396,7 @@ const LearningSession: React.FC = () => {
       );
       setActiveSession(null);
       setCurrentQuestion(null);
+      setActiveQuizAttempt(null);
       setSuccessMessage('Session paused successfully!');
     } catch (err) {
       setError('Failed to pause session');
@@ -424,23 +418,136 @@ const LearningSession: React.FC = () => {
       </Typography>
 
       {/* Active Session View */}
-      {activeSession && currentQuestion ? (
+      {activeSession && (
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              {activeSession.subject_area} - {activeSession.topic}
-            </Typography>
-            <Box display="flex" gap={1}>
-              <Chip 
-                label={`${activeSession.questions_attempted} Questions`} 
-                color="primary" 
-                size="small" 
-              />
-              <Chip 
-                label={`${activeSession.accuracy_rate.toFixed(1)}% Accuracy`} 
-                color={activeSession.accuracy_rate >= 70 ? "success" : "warning"} 
-                size="small" 
-              />
+          {activeSession.session_type === 'lesson' ? (
+            // Lesson View
+            <Box>
+              <Box display="flex" justifyContent="between" alignItems="center" mb={3}>
+                <Typography variant="h5">
+                  📖 {activeSession.subject_area} - {activeSession.topic}
+                </Typography>
+                <Box display="flex" gap={1}>
+                  <Chip label="LESSON" color="info" size="small" />
+                  <Chip 
+                    label={`~${activeSession.duration_estimate || 20} min`} 
+                    color="primary" 
+                    size="small" 
+                  />
+                </Box>
+              </Box>
+
+              {activeSession.content && (
+                <Box>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    {activeSession.content.title}
+                  </Typography>
+                  
+                  <Card sx={{ mb: 3, bgcolor: '#f8f9ff' }}>
+                    <CardContent>
+                      <Typography variant="body1" paragraph>
+                        {activeSession.content.introduction}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+
+                  <Typography variant="h6" gutterBottom>
+                    🔑 Key Concepts
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {activeSession.content.key_concepts.map((concept, index) => (
+                      <Grid key={index} size={{ xs: 12, md: 6 }}>
+                        <Card sx={{ height: '100%', bgcolor: '#fff3e0' }}>
+                          <CardContent>
+                            <Typography variant="body2">
+                              <strong>{index + 1}.</strong> {concept}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+
+                  <Typography variant="h6" gutterBottom>
+                    💡 Examples
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 4 }}>
+                    {activeSession.content.examples.map((example, index) => (
+                      <Grid key={index} size={{ xs: 12 }}>
+                        <Card sx={{ bgcolor: '#f3e5f5' }}>
+                          <CardContent>
+                            <Typography variant="body1" paragraph>
+                              <strong>Example {index + 1}:</strong>
+                            </Typography>
+                            {Object.entries(example).map(([key, value]) => (
+                              <Typography key={key} variant="body2" sx={{ ml: 2 }}>
+                                <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {
+                                  Array.isArray(value) ? (
+                                    <ul>
+                                      {value.map((item, i) => <li key={i}>{item}</li>)}
+                                    </ul>
+                                  ) : (
+                                    String(value)
+                                  )
+                                }
+                              </Typography>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+
+                  <Box display="flex" gap={2} justifyContent="center">
+                    <Button 
+                      variant="outlined" 
+                      onClick={() => setActiveSession(null)}
+                    >
+                      📚 Back to Sessions
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      color="success"
+                      onClick={() => {
+                        // Mark lesson as completed and maybe start related quiz
+                        const quizSession = sessions.find(s => 
+                          s.session_type === 'quiz' && 
+                          s.topic === activeSession.topic &&
+                          s.subject_area === activeSession.subject_area
+                        );
+                        if (quizSession) {
+                          setActiveSession(quizSession);
+                        } else {
+                          setActiveSession(null);
+                          // Could trigger a success message here
+                        }
+                      }}
+                    >
+                      ✅ Complete Lesson & Take Quiz
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          ) : activeSession && currentQuestion ? (
+            // Quiz View (existing code)
+            <Box>
+              <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+                <Typography variant="h6">
+                  📝 {activeSession.subject_area} - {activeSession.topic}
+                </Typography>
+                <Box display="flex" gap={1}>
+                  <Chip label="QUIZ" color="warning" size="small" />
+                  <Chip 
+                    label={`${activeSession.questions_attempted || 0} Questions`} 
+                    color="primary" 
+                    size="small" 
+                  />
+                  <Chip 
+                    label={`${(activeSession.accuracy_rate || 0).toFixed(1)}% Accuracy`} 
+                    color={(activeSession.accuracy_rate || 0) >= 70 ? "success" : "warning"} 
+                    size="small" 
+                  />
             </Box>
           </Box>
 
@@ -516,9 +623,13 @@ const LearningSession: React.FC = () => {
               </CardContent>
             </Card>
           )}
+            </Box>
+          ) : null}
         </Paper>
-      ) : (
-        /* Session List View */
+      )}
+      
+      {/* Session List View */}
+      {!activeSession && (
         <Box>
           <Box display="flex" justifyContent="between" alignItems="center" mb={3}>
             <Typography variant="h6">Your Learning Sessions</Typography>
@@ -533,20 +644,37 @@ const LearningSession: React.FC = () => {
           <Grid container spacing={3}>
             {sessions.map((session) => (
               <Grid key={session.id} size={{ xs: 12, md: 6, lg: 4 }}>
-                <Card>
-                  <CardContent>
+                <Card 
+                  sx={{ 
+                    height: '100%',
+                    border: session.session_type === 'lesson' ? '2px solid #2196f3' : 
+                           session.session_type === 'quiz' ? '2px solid #ff9800' : '1px solid #e0e0e0',
+                    '&:hover': { transform: 'translateY(-2px)', transition: 'transform 0.2s' }
+                  }}
+                >
+                  <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <Box display="flex" justifyContent="between" alignItems="center" mb={1}>
                       <Typography variant="h6" noWrap>
                         {session.subject_area}
                       </Typography>
-                      <Chip 
-                        label={session.status} 
-                        color={
-                          session.status === 'completed' ? 'success' : 
-                          session.status === 'active' ? 'primary' : 'default'
-                        }
-                        size="small"
-                      />
+                      <Box display="flex" gap={0.5}>
+                        <Chip 
+                          label={session.session_type.toUpperCase()} 
+                          color={
+                            session.session_type === 'lesson' ? 'info' :
+                            session.session_type === 'quiz' ? 'warning' : 'default'
+                          }
+                          size="small"
+                        />
+                        <Chip 
+                          label={session.status} 
+                          color={
+                            session.status === 'completed' ? 'success' : 
+                            session.status === 'active' ? 'primary' : 'default'
+                          }
+                          size="small"
+                        />
+                      </Box>
                     </Box>
 
                     <Typography color="textSecondary" gutterBottom>
@@ -555,30 +683,71 @@ const LearningSession: React.FC = () => {
 
                     <Divider sx={{ my: 1 }} />
 
-                    <Typography variant="body2">
-                      Questions: {session.questions_attempted} | 
-                      Accuracy: {session.accuracy_rate.toFixed(1)}%
-                    </Typography>
-                    <Typography variant="body2">
-                      Duration: {session.duration_minutes} minutes
-                    </Typography>
+                    {/* Session type specific information */}
+                    {session.session_type === 'lesson' ? (
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="body2" paragraph>
+                          📖 <strong>Lesson Content:</strong> Interactive learning material
+                        </Typography>
+                        <Typography variant="body2" paragraph>
+                          ⏱️ <strong>Duration:</strong> ~{session.duration_estimate || 20} minutes
+                        </Typography>
+                        <Typography variant="body2" paragraph>
+                          🎯 <strong>Difficulty:</strong> {Math.round(session.difficulty_level * 100)}%
+                        </Typography>
+                        {session.content && (
+                          <Typography variant="body2" color="text.secondary">
+                            📋 {session.content.key_concepts?.length || 3} key concepts covered
+                          </Typography>
+                        )}
+                      </Box>
+                    ) : (
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="body2" paragraph>
+                          📝 <strong>Questions:</strong> {session.total_questions || session.questions_attempted || 0}
+                        </Typography>
+                        {session.accuracy_rate && (
+                          <Typography variant="body2" paragraph>
+                            🎯 <strong>Accuracy:</strong> {session.accuracy_rate.toFixed(1)}%
+                          </Typography>
+                        )}
+                        <Typography variant="body2" paragraph>
+                          ⏱️ <strong>Time Limit:</strong> {session.time_limit_minutes || session.duration_minutes || 15} minutes
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          📊 Difficulty: {Math.round(session.difficulty_level * 100)}%
+                        </Typography>
+                      </Box>
+                    )}
 
                     <Box mt={2}>
                       {session.status === 'active' || session.status === 'paused' ? (
                         <Button 
                           variant="contained" 
                           size="small" 
+                          fullWidth
                           onClick={() => startSession(session)}
                         >
                           {session.status === 'paused' ? 'Resume' : 'Continue'}
                         </Button>
-                      ) : (
+                      ) : session.status === 'completed' ? (
                         <Button 
                           variant="outlined" 
                           size="small" 
+                          fullWidth
                           disabled
                         >
-                          Completed
+                          ✅ Completed
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="contained" 
+                          size="small" 
+                          fullWidth
+                          onClick={() => startSession(session)}
+                          color={session.session_type === 'lesson' ? 'info' : 'warning'}
+                        >
+                          {session.session_type === 'lesson' ? '📖 Start Lesson' : '📝 Take Quiz'}
                         </Button>
                       )}
                     </Box>
