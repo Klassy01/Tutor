@@ -1,481 +1,375 @@
 """
-Educational AI Content Generator using Qwen Coder, Llama 3, and Mistral models.
+Advanced AI-Powered Educational Content Generator
+
+Generates high-quality lessons and quizzes using local AI models.
+Uses Ollama (Llama 3, Mistral, Qwen) for privacy-first AI generation.
 """
 
-import json
-import logging
 import asyncio
-from typing import Dict, List, Any, Optional
+import logging
 from datetime import datetime
+from typing import Dict, List, Any, Optional
 
 from backend.services.ai_models import ai_model_manager
 
 logger = logging.getLogger(__name__)
 
 class AdvancedAIGenerator:
-    """Educational AI content generator using specialized models."""
+    """Advanced AI generator using local models via Ollama"""
     
     def __init__(self):
-        self.initialized = False
-    
-    async def initialize(self):
-        """Initialize the AI models."""
-        if self.initialized:
-            return
-            
-        try:
-            await ai_model_manager.warmup_models()
-            self.initialized = True
-            logger.info("✅ Educational AI generator initialized successfully")
-        except Exception as e:
-            logger.warning(f"AI generator initialization had issues: {e}")
-            self.initialized = True  # Continue with fallback
-    
+        self.model_manager = ai_model_manager
+        
     async def generate_lesson_content(
         self, 
-        subject: str, 
         topic: str, 
-        difficulty: str = "intermediate"
-    ) -> Dict[str, Any]:
-        """Generate comprehensive lesson content using educational AI."""
-        await self.initialize()
-        
-        # Create educational prompt for lesson generation
-        prompt = f"""Create a comprehensive educational lesson about "{topic}" in {subject} for {difficulty} level students.
-
-Structure the lesson with these sections:
-1. **Introduction**: What students will learn and why it's important
-2. **Key Concepts**: Break down the main ideas clearly
-3. **Examples**: Real-world applications and concrete examples
-4. **Practice**: Questions or exercises to check understanding
-5. **Summary**: Recap the main points
-
-Topic: {topic}
-Subject: {subject}
-Level: {difficulty}
-
-Please create an engaging, well-structured lesson:"""
-
-        try:
-            # Generate content using educational AI
-            content = await ai_model_manager.generate_content(
-                prompt, 
-                content_type="lesson"
-            )
-            
-            # Structure the lesson data
-            lesson = {
-                "id": f"lesson_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                "subject": subject,
-                "topic": topic,
-                "difficulty_level": difficulty,
-                "title": f"{topic} - {subject}",
-                "content": content,
-                "key_concepts": self._extract_key_concepts(content, topic),
-                "duration_minutes": 25,
-                "learning_objectives": [
-                    f"Understand the core concepts of {topic}",
-                    f"Apply {topic} principles to solve problems",
-                    f"Analyze real-world applications of {topic}",
-                    f"Develop critical thinking skills in {subject}"
-                ],
-                "created_at": datetime.now().isoformat(),
-                "model_used": "educational_ai"
-            }
-            
-            return lesson
-            
-        except Exception as e:
-            logger.error(f"AI lesson generation failed: {e}")
-            return self._create_fallback_lesson(subject, topic, difficulty)
-    
-    async def generate_quiz_questions(
-        self,
         subject: str,
-        topic: str,
-        difficulty: str = "intermediate",
-        num_questions: int = 5
-    ) -> List[Dict[str, Any]]:
-        """Generate educational quiz questions using AI."""
-        await self.initialize()
-        
-        questions = []
-        
-        for i in range(num_questions):
-            # Create prompt for each question
-            prompt = f"""Create a {difficulty} level multiple choice quiz question about "{topic}" in {subject}.
+        difficulty_level: str = "intermediate",
+        learning_style: str = "visual",
+        duration_minutes: int = 30
+    ) -> Dict[str, Any]:
+        """Generate comprehensive lesson content using local AI models"""
+        try:
+            # Create detailed prompt for lesson generation
+            prompt = f"""Create a comprehensive lesson on '{topic}' in {subject}.
 
 Requirements:
-- Clear, specific question that tests understanding
-- Four distinct answer choices (A, B, C, D)
-- One clearly correct answer
-- Brief explanation of why the answer is correct
+- Target difficulty: {difficulty_level}
+- Learning style: {learning_style}  
+- Duration: {duration_minutes} minutes
+- Include clear explanations with examples
+- Add practical applications and real-world context
+- Structure with headings and bullet points
+- Focus on understanding, not memorization
 
-Format your response exactly like this:
-Question: [Your question here]
-A) [First option]
-B) [Second option]
-C) [Third option]
-D) [Fourth option]
-Correct Answer: [Letter of correct answer]
-Explanation: [Brief explanation why this is correct]
+Generate a well-structured lesson covering:
+1. Introduction and importance
+2. Key concepts and definitions
+3. Step-by-step explanations
+4. Practical examples
+5. Real-world applications
+6. Summary and key takeaways
 
 Topic: {topic}
-Subject: {subject}
-Level: {difficulty}
+Subject: {subject}"""
 
-Create question {i+1}:"""
+            # Try to generate with AI model
+            content = await self.model_manager.generate_text(
+                prompt=prompt,
+                max_tokens=2000,
+                temperature=0.7
+            )
+            
+            if content and len(content.strip()) > 100:
+                return {
+                    "content": content.strip(),
+                    "generated_by": "ai_model",
+                    "timestamp": datetime.now().isoformat(),
+                    "topic": topic,
+                    "subject": subject
+                }
+            else:
+                raise Exception("Generated content too short")
+                
+        except Exception as e:
+            logger.warning(f"AI generation failed, using enhanced template: {e}")
+            # Enhanced fallback template
+            content = f"""## What is {topic}?
+{topic} is a fundamental concept in {subject} that plays a crucial role in understanding how systems work and interact. It represents key principles that help us analyze, predict, and solve problems in this field.
 
-            try:
-                response = await ai_model_manager.generate_content(
-                    prompt, 
-                    content_type="quiz"
-                )
-                
-                question_data = self._parse_quiz_response(response, i+1, topic, subject)
-                questions.append(question_data)
-                
-                # Small delay to avoid overwhelming the model
-                await asyncio.sleep(0.3)
-                
-            except Exception as e:
-                logger.error(f"Failed to generate question {i+1}: {e}")
-                # Add fallback question
-                questions.append(self._create_fallback_question(topic, subject, i+1, difficulty))
+## Why is {topic} Important?
+In {subject}, {topic} serves as a foundation for:
+- Analyzing data and identifying patterns
+- Making informed predictions and decisions  
+- Understanding cause-and-effect relationships
+- Solving complex problems systematically
+- Building more advanced knowledge
+
+## Key Concepts
+- **Definition**: Clear understanding of what {topic} means and includes
+- **Core Principles**: Fundamental rules and properties of {topic}
+- **Applications**: How {topic} is used in real scenarios and problem-solving
+- **Methods**: Different approaches and techniques for working with {topic}
+- **Analysis**: Ways to interpret, evaluate, and apply {topic} knowledge
+
+## Real-World Applications
+{topic} appears in many practical areas including:
+- Business analytics and decision-making
+- Scientific research and discovery
+- Technology development and innovation
+- Problem-solving in professional settings
+- Daily life situations and personal decisions
+
+## Learning Activities
+To master {topic}, consider these approaches:
+1. **Study the fundamentals** - Start with basic definitions and principles
+2. **Practice with examples** - Work through real-world scenarios
+3. **Apply knowledge** - Use {topic} concepts in practical projects
+4. **Connect concepts** - Link {topic} to other areas in {subject}
+5. **Test understanding** - Complete exercises and assessments
+
+## Summary
+{topic} is essential for success in {subject}. By understanding its core principles, applications, and methods, you can develop strong analytical skills and solve complex problems effectively. Remember to practice regularly and connect concepts to real-world situations for deeper learning."""
+
+            return {
+                "content": content.strip(),
+                "generated_by": "template",
+                "timestamp": datetime.now().isoformat(),
+                "topic": topic,
+                "subject": subject
+            }
+
+    async def generate_quiz(
+        self, 
+        topic: str, 
+        subject: str,
+        num_questions: int = 5,
+        difficulty_level: str = "intermediate",
+        question_types: List[str] = None
+    ) -> Dict[str, Any]:
+        """Generate quiz questions using local AI models"""
         
-        return questions
-    
+        if question_types is None:
+            question_types = ["multiple_choice", "true_false"]
+            
+        try:
+            # Create detailed prompt for quiz generation
+            prompt = f"""Generate {num_questions} quiz questions about '{topic}' in {subject}.
+
+Requirements:
+- Difficulty: {difficulty_level}
+- Question types: {', '.join(question_types)}
+- Focus on understanding and application
+- Include clear explanations for answers
+- Make questions practical and relevant
+
+For each question, provide:
+1. Clear, specific question text
+2. Answer options (for multiple choice)
+3. Correct answer
+4. Detailed explanation
+
+Format as JSON with this structure:
+{{
+  "questions": [
+    {{
+      "question": "Question text here",
+      "type": "multiple_choice",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_answer": 0,
+      "explanation": "Explanation of why this is correct"
+    }}
+  ]
+}}
+
+Topic: {topic}
+Subject: {subject}"""
+
+            # Try to generate with AI model
+            response = await self.model_manager.generate_text(
+                prompt=prompt,
+                max_tokens=1500,
+                temperature=0.6
+            )
+            
+            if response and len(response.strip()) > 50:
+                # Try to parse JSON response
+                import json
+                try:
+                    quiz_data = json.loads(response.strip())
+                    if "questions" in quiz_data and len(quiz_data["questions"]) > 0:
+                        return {
+                            "questions": quiz_data["questions"],
+                            "generated_by": "ai_model",
+                            "timestamp": datetime.now().isoformat(),
+                            "topic": topic,
+                            "subject": subject
+                        }
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse AI-generated quiz JSON")
+                    
+            raise Exception("AI quiz generation failed or invalid format")
+            
+        except Exception as e:
+            logger.warning(f"AI quiz generation failed, using template: {e}")
+            
+            # Fallback quiz template
+            fallback_quiz = [
+                {
+                    "question": f"What is the primary focus of {topic}?",
+                    "type": "multiple_choice",
+                    "options": [
+                        "Understanding basic concepts and applications",
+                        "Memorizing complex formulas only", 
+                        "Learning unrelated facts",
+                        "Avoiding practical examples"
+                    ],
+                    "correct_answer": 0,
+                    "explanation": f"{topic} focuses on building understanding through concepts and real-world applications."
+                },
+                {
+                    "question": f"Which approach best describes effective learning of {topic}?",
+                    "type": "multiple_choice", 
+                    "options": [
+                        "Rote memorization without context",
+                        "Connecting concepts to practical applications",
+                        "Ignoring foundational principles",
+                        "Learning in isolation from other topics"
+                    ],
+                    "correct_answer": 1,
+                    "explanation": f"Effective learning of {topic} involves connecting concepts to practical applications."
+                },
+                {
+                    "question": f"True or False: {topic} has real-world applications beyond academic study.",
+                    "type": "true_false",
+                    "correct_answer": True,
+                    "explanation": f"{topic} has numerous practical applications in professional and daily life contexts."
+                }
+            ]
+            
+            # Limit to requested number of questions
+            questions = fallback_quiz[:num_questions]
+            
+            return {
+                "questions": questions,
+                "generated_by": "template",
+                "timestamp": datetime.now().isoformat(),
+                "topic": topic,
+                "subject": subject
+            }
+
+    async def generate_adaptive_content(
+        self,
+        topic: str,
+        subject: str,
+        student_performance: Dict[str, Any],
+        learning_objectives: List[str] = None
+    ) -> Dict[str, Any]:
+        """Generate adaptive content based on student performance"""
+        
+        # Determine content difficulty based on performance
+        avg_score = student_performance.get("average_score", 0.5)
+        
+        if avg_score >= 0.8:
+            difficulty = "advanced"
+        elif avg_score >= 0.6:
+            difficulty = "intermediate"  
+        else:
+            difficulty = "beginner"
+            
+        # Generate lesson content
+        lesson_content = await self.generate_lesson_content(
+            topic=topic,
+            subject=subject,
+            difficulty_level=difficulty
+        )
+        
+        # Generate appropriate quiz
+        quiz_content = await self.generate_quiz(
+            topic=topic,
+            subject=subject,
+            difficulty_level=difficulty,
+            num_questions=5
+        )
+        
+        return {
+            "lesson": lesson_content,
+            "quiz": quiz_content,
+            "difficulty_level": difficulty,
+            "adapted_for": student_performance,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    async def generate_explanation(
+        self,
+        question: str,
+        context: str,
+        detail_level: str = "medium"
+    ) -> str:
+        """Generate detailed explanations for questions or concepts"""
+        try:
+            prompt = f"""Provide a clear, {detail_level}-detail explanation for this question:
+
+Question: {question}
+Context: {context}
+
+Requirements:
+- Clear and understandable language
+- Step-by-step reasoning if applicable
+- Examples when helpful
+- Connections to broader concepts
+- Practical relevance
+
+Explanation:"""
+
+            explanation = await self.model_manager.generate_text(
+                prompt=prompt,
+                max_tokens=800,
+                temperature=0.5
+            )
+            
+            if explanation and len(explanation.strip()) > 20:
+                return explanation.strip()
+            else:
+                raise Exception("Generated explanation too short")
+                
+        except Exception as e:
+            logger.warning(f"AI explanation generation failed: {e}")
+            return f"""This question relates to {context} and requires understanding of key concepts and their applications.
+
+To approach this effectively:
+1. Identify the main concept being asked about
+2. Consider how it connects to the broader topic
+3. Think about practical applications and examples
+4. Apply logical reasoning to reach the answer
+
+For more detailed explanations, consider reviewing the lesson material and practicing with similar examples."""
+
     async def generate_chat_response(
         self,
-        user_message: str,
-        conversation_history: List[Dict[str, str]] = None,
-        subject: str = "General"
+        message: str,
+        context: str = "",
+        max_tokens: int = 500
     ) -> str:
-        """Generate educational chat response."""
-        await self.initialize()
-        
-        # Build context from conversation history
-        context = ""
-        if conversation_history:
-            recent_messages = conversation_history[-3:]  # Last 3 exchanges
-            for msg in recent_messages:
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-                context += f"{role.title()}: {content}\n"
-        
-        # Create educational chat prompt
-        prompt = f"""You are a helpful AI tutor specializing in {subject}. Your role is to:
-- Provide clear, accurate educational explanations
-- Encourage learning and curiosity
-- Break down complex concepts into understandable parts
-- Give helpful examples and analogies
-- Ask follow-up questions to check understanding
-
-{context}
-Student: {user_message}
-
-As their AI tutor, provide a helpful, educational response:"""
-
+        """Generate a conversational response for the AI tutor chat"""
         try:
-            response = await ai_model_manager.generate_content(
-                prompt,
-                content_type="chat"
+            prompt = f"""You are an AI tutor. Please respond to this student's question in a helpful, educational manner:
+
+Student Question: {message}
+Context: {context}
+
+Requirements:
+- Be friendly and encouraging
+- Provide clear, educational explanations
+- Use examples when helpful
+- Keep the response focused and concise
+- Encourage further learning
+
+Response:"""
+
+            response = await self.model_manager.generate_text(
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=0.7
             )
             
-            # Clean up the response
-            response = response.strip()
-            if not response:
-                response = f"I'd be happy to help you learn about {subject}! Could you tell me more about what specific aspect you'd like to explore?"
-            
-            return response
-            
+            if response and len(response.strip()) > 10:
+                return response.strip()
+            else:
+                raise Exception("Generated response too short")
+                
         except Exception as e:
-            logger.error(f"Chat response generation failed: {e}")
-            return f"I'm here to help you learn about {subject}! What would you like to know more about?"
-    
-    def _extract_key_concepts(self, content: str, topic: str) -> List[str]:
-        """Extract key learning concepts from lesson content."""
-        concepts = []
-        
-        # Look for structured content indicators
-        lines = content.lower().split('\n')
-        for line in lines:
-            line = line.strip()
-            # Look for numbered lists, bullet points, or key terms
-            if any(indicator in line for indicator in ['key', 'important', 'concept', 'principle', 'understand']):
-                if any(prefix in line for prefix in ['1.', '2.', '3.', '-', '•', '*']):
-                    # Clean up the line
-                    clean_concept = line
-                    for prefix in ['1.', '2.', '3.', '4.', '5.', '-', '•', '*', 'key', 'important']:
-                        clean_concept = clean_concept.replace(prefix, '').strip()
-                    if clean_concept and len(clean_concept) > 10:
-                        concepts.append(clean_concept.capitalize())
-        
-        # Default concepts if none extracted
-        if not concepts:
-            concepts = [
-                f"Understanding {topic}",
-                f"Practical applications of {topic}",
-                f"Key principles and methods",
-                f"Problem-solving approaches",
-                f"Real-world connections"
-            ]
-        
-        return concepts[:5]  # Limit to 5 key concepts
-    
-    def _parse_quiz_response(self, response: str, question_num: int, topic: str, subject: str) -> Dict[str, Any]:
-        """Parse AI-generated quiz question into structured format."""
-        lines = [line.strip() for line in response.split('\n') if line.strip()]
-        
-        question_text = ""
-        options = []
-        correct_answer = ""
-        explanation = ""
-        
-        for line in lines:
-            if line.startswith("Question:"):
-                question_text = line.replace("Question:", "").strip()
-            elif line.startswith(("A)", "B)", "C)", "D)")):
-                option_text = line[2:].strip()  # Remove "A)" prefix
-                options.append(option_text)
-                # Check if this is marked as correct
-                if "correct answer:" in response.lower():
-                    correct_letter = line[0]
-                    if f"correct answer: {correct_letter.lower()}" in response.lower() or f"correct: {correct_letter.lower()}" in response.lower():
-                        correct_answer = option_text
-            elif any(start in line.lower() for start in ["correct answer:", "correct:", "explanation:"]):
-                if "explanation:" in line.lower():
-                    explanation = line.split("explanation:")[-1].strip()
-                elif not correct_answer and len(options) > 0:
-                    # Try to identify correct answer
-                    for opt in options:
-                        if opt.lower() in line.lower():
-                            correct_answer = opt
-                            break
-        
-        # Fallback values if parsing failed
-        if not question_text:
-            question_text = f"What is an important concept related to {topic} in {subject}?"
-        
-        if not options:
-            options = [
-                f"Core principles of {topic}",
-                "Unrelated concept",
-                "Incorrect approach",
-                "Random information"
-            ]
-        
-        if not correct_answer and options:
-            correct_answer = options[0]  # Default to first option
-        
-        if not explanation:
-            explanation = f"This question tests understanding of key concepts in {topic}."
-        
-        return {
-            "question_id": f"q_{question_num}",
-            "question_text": question_text,
-            "answer_options": options[:4],  # Ensure exactly 4 options
-            "correct_answer": correct_answer,
-            "explanation": explanation,
-            "difficulty_level": 0.6,  # Medium difficulty
-            "topic": topic,
-            "subject": subject
-        }
-    
-    def _create_fallback_lesson(self, subject: str, topic: str, difficulty: str) -> Dict[str, Any]:
-        """Create a fallback lesson when AI generation fails."""
-        content_templates = {
-            "mathematics": f"""
-            # Learning {topic} in Mathematics
-            
-            ## Introduction
-            {topic} is a fundamental mathematical concept that builds the foundation for advanced problem-solving. Understanding this topic will enhance your analytical thinking and mathematical reasoning skills.
-            
-            ## Key Concepts
-            • **Definition**: Understanding what {topic} means in mathematical context
-            • **Applications**: How {topic} is used to solve real problems
-            • **Methods**: Step-by-step approaches to working with {topic}
-            • **Connections**: How {topic} relates to other mathematical concepts
-            
-            ## Practice Approach
-            1. Start with basic definitions and examples
-            2. Work through guided practice problems
-            3. Apply concepts to real-world scenarios
-            4. Check understanding with varied exercises
-            
-            ## Summary
-            Mastering {topic} requires understanding both theory and practical application. Practice regularly and connect new knowledge to previously learned concepts.
-            """,
-            
-            "science": f"""
-            # Exploring {topic} in Science
-            
-            ## Introduction
-            {topic} is an important scientific concept that helps us understand natural phenomena and scientific principles. This knowledge forms the basis for scientific inquiry and discovery.
-            
-            ## Scientific Understanding
-            • **Observation**: What we can observe about {topic}
-            • **Theory**: Scientific explanations behind {topic}
-            • **Evidence**: How scientific evidence supports our understanding
-            • **Applications**: Practical uses of {topic} in science and technology
-            
-            ## Investigation Methods
-            1. Form hypotheses about {topic}
-            2. Design experiments to test understanding
-            3. Collect and analyze data
-            4. Draw conclusions based on evidence
-            
-            ## Real-World Connections
-            Understanding {topic} helps explain many phenomena we observe in everyday life and forms the foundation for technological advances.
-            """
-        }
-        
-        # Get appropriate template or use general template
-        subject_key = subject.lower()
-        if subject_key in content_templates:
-            content = content_templates[subject_key]
-        else:
-            content = f"""
-            # Understanding {topic} in {subject}
-            
-            ## Learning Objectives
-            By studying {topic}, you will develop a comprehensive understanding of this important concept in {subject}.
-            
-            ## Core Concepts
-            • Fundamental principles of {topic}
-            • Key terminology and definitions
-            • Practical applications and examples
-            • Problem-solving strategies
-            
-            ## Study Approach
-            1. Begin with basic concepts and build complexity gradually
-            2. Practice with varied examples and scenarios
-            3. Connect new learning to existing knowledge
-            4. Apply concepts to real-world situations
-            
-            ## Assessment
-            Test your understanding through practice questions, discussions, and practical applications of {topic} concepts.
-            """
-        
-        return {
-            "id": f"lesson_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            "subject": subject,
-            "topic": topic,
-            "difficulty_level": difficulty,
-            "title": f"{topic} - {subject}",
-            "content": content.strip(),
-            "key_concepts": [
-                f"Understanding {topic}",
-                "Practical applications",
-                "Problem-solving methods",
-                "Real-world connections"
-            ],
-            "duration_minutes": 25,
-            "learning_objectives": [
-                f"Master fundamental concepts of {topic}",
-                f"Apply {topic} knowledge to solve problems",
-                f"Analyze {topic} in real-world contexts",
-                f"Develop critical thinking skills"
-            ],
-            "created_at": datetime.now().isoformat(),
-            "model_used": "educational_fallback"
-        }
-    
-    def _create_fallback_question(self, topic: str, subject: str, question_num: int, difficulty: str) -> Dict[str, Any]:
-        """Create a fallback quiz question."""
-        question_templates = {
-            "easy": [
-                f"What is {topic}?",
-                f"Which of the following describes {topic}?",
-                f"What is the main purpose of {topic}?",
-            ],
-            "intermediate": [
-                f"How is {topic} applied in {subject}?",
-                f"What are the key characteristics of {topic}?",
-                f"Which principle best explains {topic}?",
-            ],
-            "hard": [
-                f"How does {topic} relate to advanced concepts in {subject}?",
-                f"What would happen if you modified {topic} in a complex system?",
-                f"How would you solve a complex problem involving {topic}?",
-            ]
-        }
-        
-        templates = question_templates.get(difficulty, question_templates["intermediate"])
-        question_text = templates[question_num % len(templates)]
-        
-        return {
-            "question_id": f"q_{question_num}",
-            "question_text": question_text,
-            "answer_options": [
-                f"Comprehensive understanding and proper application of {topic}",
-                "Basic memorization without understanding",
-                "Avoiding complex aspects of the concept", 
-                "Guessing without systematic approach"
-            ],
-            "correct_answer": f"Comprehensive understanding and proper application of {topic}",
-            "explanation": f"Success with {topic} requires thorough understanding and practical application skills.",
-            "difficulty_level": 0.5,
-            "topic": topic,
-            "subject": subject
-        }
-    
-    async def generate_quiz(
-        self,
-        subject: str,
-        topic: str,
-        difficulty: str = "medium",
-        num_questions: int = 5
-    ) -> Dict[str, Any]:
-        """Generate a complete quiz with questions - compatibility method for quiz endpoint."""
-        await self.initialize()
-        
-        try:
-            # Generate questions using the existing method
-            questions = await self.generate_quiz_questions(
-                subject=subject,
-                topic=topic,
-                difficulty=difficulty,
-                num_questions=num_questions
-            )
-            
-            # Format as a complete quiz response
-            quiz_data = {
-                "quiz_id": f"quiz_{datetime.utcnow().timestamp()}",
-                "title": f"{subject}: {topic} Quiz",
-                "subject": subject,
-                "topic": topic,
-                "difficulty_level": difficulty,
-                "num_questions": len(questions),
-                "questions": questions,
-                "time_limit_minutes": min(num_questions * 2, 30),  # 2 minutes per question, max 30
-                "created_at": datetime.utcnow().isoformat()
-            }
-            
-            logger.info(f"✅ Generated quiz with {len(questions)} questions for {subject}: {topic}")
-            return quiz_data
-            
-        except Exception as e:
-            logger.error(f"Quiz generation failed: {e}")
-            # Return fallback quiz
-            return {
-                "quiz_id": f"fallback_quiz_{datetime.utcnow().timestamp()}",
-                "title": f"{subject}: {topic} Quiz",
-                "subject": subject,
-                "topic": topic,
-                "difficulty_level": difficulty,
-                "num_questions": 1,
-                "questions": [{
-                    "id": "q_1",
-                    "question": f"What is an important concept in {topic}?",
-                    "options": ["Basic principle", "Advanced theory", "Practical application", "All of the above"],
-                    "correct_answer": "All of the above",
-                    "explanation": f"Understanding {topic} requires grasping multiple aspects including principles, theory, and applications."
-                }],
-                "time_limit_minutes": 10,
-                "created_at": datetime.utcnow().isoformat()
-            }
+            logger.warning(f"AI chat response generation failed: {e}")
+            return f"""Thank you for your question! I understand you're asking about: "{message}"
 
+While I work on generating a detailed response, here are some key points to consider:
 
-# Global instance
+1. **Break down the topic**: Think about the main concepts involved
+2. **Look for connections**: How does this relate to what you've already learned?  
+3. **Practice examples**: Try working through similar problems or scenarios
+4. **Ask follow-up questions**: What specific aspects would you like to explore further?
+
+I'm here to help guide your learning journey. Feel free to ask more specific questions or request examples!"""
+
+# Create global instance
 advanced_ai_generator = AdvancedAIGenerator()

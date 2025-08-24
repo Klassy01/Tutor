@@ -70,12 +70,11 @@ async def generate_lesson(
         
         logger.info(f"Generating lesson for user {current_user.id}: {subject} - {topic}")
         
-        # Generate lesson using advanced AI
-        lesson_content = await advanced_ai_generator.generate_lesson(
-            subject=subject,
-            topic=topic,
-            difficulty_level=difficulty,
-            learning_objectives=learning_objectives
+        # Generate lesson using AI
+        lesson_content = await advanced_ai_generator.generate_lesson_content(
+            topic=lesson_request.topic,
+            subject=lesson_request.subject,
+            difficulty_level=lesson_request.difficulty_level or "medium"
         )
         
         if not lesson_content:
