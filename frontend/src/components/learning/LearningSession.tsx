@@ -23,7 +23,11 @@ import {
   FormControlLabel,
   Radio,
   CircularProgress,
-  Divider
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon
 } from '@mui/material';
 import { learningAPI, quizAPI, lessonAPI } from '../../services/api';
 import QuizDisplay from './QuizDisplay';
@@ -40,6 +44,7 @@ interface Question {
 
 interface LessonContent {
   title: string;
+  full_content?: string;
   introduction: string;
   key_concepts: string[];
   examples: Array<{
@@ -177,6 +182,9 @@ const LearningSession: React.FC = () => {
           status: 'active',
           content: lessonData.lesson?.content ? {
             title: lessonData.lesson.title || `${newSessionData.topic} - ${newSessionData.subject_area}`,
+            full_content: typeof lessonData.lesson.content === 'string' 
+              ? lessonData.lesson.content
+              : lessonData.lesson.content.full_content || lessonData.lesson.content.introduction || `Welcome to this comprehensive lesson on ${newSessionData.topic}.`,
             introduction: typeof lessonData.lesson.content === 'string' 
               ? lessonData.lesson.content.substring(0, 300) + '...'
               : lessonData.lesson.content.introduction || `Welcome to this comprehensive lesson on ${newSessionData.topic}.`,
@@ -191,6 +199,7 @@ const LearningSession: React.FC = () => {
             ]
           } : {
             title: `${newSessionData.topic} - ${newSessionData.subject_area}`,
+            full_content: `Welcome to this comprehensive lesson on ${newSessionData.topic}.`,
             introduction: `Welcome to this comprehensive lesson on ${newSessionData.topic}.`,
             key_concepts: ["Foundation principles", "Practical applications", "Problem-solving strategies"],
             examples: [
@@ -550,30 +559,107 @@ const LearningSession: React.FC = () => {
                 </Box>
               </Box>
 
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 4 }}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={() => {
-                    setActiveSession(null);
-                    setSuccessMessage("Lesson completed successfully! 🎉");
-                  }}
-                  sx={{
-                    px: 5,
-                    py: 1.5,
-                    borderRadius: 3,
-                    fontWeight: 600,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    fontSize: '1.1rem',
-                    textTransform: 'none',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                    }
-                  }}
-                >
-                  ✅ Complete Lesson
-                </Button>
-              </Box>
+              {activeSession.content && (
+                <Card sx={{ 
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                  border: '1px solid rgba(0,0,0,0.05)',
+                  mb: 3
+                }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: 'text.primary', mb: 3 }}>
+                      {activeSession.content.title}
+                    </Typography>
+                    
+                    {/* Full Lesson Content */}
+                    {activeSession.content.full_content && (
+                      <Box sx={{ mb: 4 }}>
+                        <Typography variant="body1" sx={{ 
+                          lineHeight: 1.8, 
+                          whiteSpace: 'pre-line',
+                          fontSize: '1rem',
+                          color: 'text.primary'
+                        }}>
+                          {activeSession.content.full_content}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* Key Concepts */}
+                    {activeSession.content.key_concepts && activeSession.content.key_concepts.length > 0 && (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                          🎯 Key Concepts
+                        </Typography>
+                        <List>
+                          {activeSession.content.key_concepts.map((concept: string, index: number) => (
+                            <ListItem key={index} sx={{ py: 0.5 }}>
+                              <ListItemIcon>
+                                <Typography variant="h6" color="primary.main">•</Typography>
+                              </ListItemIcon>
+                              <ListItemText primary={concept} />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Box>
+                    )}
+
+                    <Divider sx={{ my: 3 }} />
+
+                    {/* Examples */}
+                    {activeSession.content.examples && activeSession.content.examples.length > 0 && (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+                          💡 Examples
+                        </Typography>
+                        {activeSession.content.examples.map((example: any, index: number) => (
+                          <Card key={index} sx={{ mb: 2, bgcolor: 'grey.50' }}>
+                            <CardContent sx={{ p: 2 }}>
+                              {Object.entries(example).map(([key, value]) => (
+                                <Box key={key}>
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                                    {key}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                    {value as string}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </Box>
+                    )}
+
+                    <Box sx={{ mt: 4, display: 'flex', gap: 2, justifyContent: 'center' }}>
+                      <Button 
+                        variant="contained" 
+                        size="large"
+                        onClick={() => {
+                          setActiveSession(null);
+                          setSuccessMessage("Lesson completed successfully! 🎉");
+                        }}
+                        sx={{ 
+                          px: 5,
+                          py: 1.5,
+                          borderRadius: 3,
+                          fontWeight: 600,
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          fontSize: '1.1rem',
+                          textTransform: 'none',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                          }
+                        }}
+                      >
+                        ✅ Complete Lesson
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
             </Box>
           ) : (
             <Box>

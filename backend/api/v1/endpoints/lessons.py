@@ -72,9 +72,9 @@ async def generate_lesson(
         
         # Generate lesson using AI
         lesson_content = await advanced_ai_generator.generate_lesson_content(
-            topic=lesson_request.topic,
-            subject=lesson_request.subject,
-            difficulty_level=lesson_request.difficulty_level or "medium"
+            topic=topic,
+            subject=subject,
+            difficulty_level=difficulty
         )
         
         if not lesson_content:
