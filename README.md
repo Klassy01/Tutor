@@ -1,37 +1,36 @@
 # AI-Powered Personal Tutor: Adaptive Learning System
 
-A scalable, adaptive learning system designed to enhance student engagement through personalized AI tutoring, real-time progress tracking, and intelligent content recommendations.
+A comprehensive, adaptive learning platform that provides personalized AI tutoring, real-time progress tracking, and intelligent content generation. Built with FastAPI backend and React frontend, featuring both OpenAI and local AI model support.
 
 ## 🎯 Features
 
 ### Core Learning Features
-- **Adaptive AI Tutoring**: Personalized tutoring sessions powered by Google Gemini Flash or OpenAI GPT models
+- **Adaptive AI Tutoring**: Personalized tutoring sessions powered by OpenAI GPT models or local Ollama models
 - **Real-time Chat Interface**: WebSocket-based instant messaging with AI tutor
-- **Smart Content Recommendations**: ML-driven content suggestions based on learning patterns
+- **Dynamic Content Generation**: AI-generated lessons, quizzes, and explanations
 - **Comprehensive Progress Tracking**: Detailed mastery metrics and learning analytics
-- **Gamified Learning Experience**: Points, streaks, achievements, and progress visualization
+- **Interactive Learning Sessions**: Engaging lesson delivery with quiz integration
 
 ### Advanced Capabilities
-- **Knowledge Gap Analysis**: Intelligent identification of learning gaps and prerequisites
-- **Adaptive Exercise Generation**: Dynamic difficulty adjustment based on student performance
-- **Learning Path Optimization**: Personalized learning sequences using adaptive algorithms
-- **Engagement Analytics**: Deep insights into student motivation and focus patterns
-- **Multi-modal Content Support**: Support for various content types and learning objectives
+- **Multi-AI Provider Support**: OpenAI API integration with local Ollama model fallback
+- **Adaptive Exercise Generation**: Dynamic quiz creation with multiple question types
+- **Learning Path Optimization**: Personalized learning sequences based on performance
+- **Real-time Progress Analytics**: Live tracking of learning metrics and achievements
+- **Responsive Web Interface**: Modern React-based UI with Material-UI components
 
 ## 🏗️ Architecture
 
 ### Backend Stack
 - **FastAPI**: High-performance async Python web framework
 - **SQLAlchemy + Alembic**: ORM and database migrations
-- **PostgreSQL/SQLite**: Production and development databases
-- **Redis**: Caching and session management
+- **SQLite**: Development database (PostgreSQL ready for production)
 - **WebSocket**: Real-time communication
+- **JWT Authentication**: Secure token-based authentication
 
 ### AI/ML Stack
-- **Google Gemini / OpenAI API**: Gemini Flash or GPT models for conversational AI tutoring
+- **OpenAI API**: GPT models for conversational AI tutoring and content generation
+- **Ollama**: Local AI models (Llama 3, Mistral, Qwen) for privacy-first learning
 - **scikit-learn**: Machine learning algorithms for adaptive learning
-- **transformers**: Hugging Face models for NLP tasks
-- **PyTorch**: Deep learning framework for custom models
 - **NumPy/Pandas**: Data processing and analysis
 
 ### Security & Performance
@@ -44,74 +43,89 @@ A scalable, adaptive learning system designed to enhance student engagement thro
 ## 📁 Project Structure
 
 ```
-Learning-Tutor/
-├── app/                          # Backend application
-│   ├── api/                      # API layer
+Tutor/
+├── backend/                      # FastAPI backend application
+│   ├── api/                     # API layer
 │   │   ├── v1/
-│   │   │   ├── endpoints/        # API endpoints
-│   │   │   │   ├── auth.py       # Authentication endpoints
-│   │   │   │   ├── students.py   # Student management
-│   │   │   │   ├── content.py    # Content management
-│   │   │   │   ├── learning.py   # Learning sessions
-│   │   │   │   ├── progress.py   # Progress tracking
-│   │   │   │   └── ai_tutor.py   # AI tutor interactions
-│   │   │   └── api.py            # API router configuration
-│   │   └── dependencies.py       # API dependencies
-│   ├── core/                     # Core functionality
-│   │   ├── config.py            # Application configuration
-│   │   ├── database.py          # Database setup
-│   │   └── security.py          # Security utilities
-│   ├── models/                   # Database models
-│   │   ├── user.py              # User and authentication
-│   │   ├── student.py           # Student profiles
-│   │   ├── content.py           # Learning content
-│   │   ├── learning_session.py  # Learning sessions
-│   │   └── progress.py          # Progress tracking
-│   ├── services/                 # Business logic services
-│   │   ├── ai_tutor_service.py  # AI tutoring logic
+│   │   │   ├── endpoints/       # API endpoints
+│   │   │   │   ├── auth.py      # Authentication endpoints
+│   │   │   │   ├── students.py  # Student management
+│   │   │   │   ├── content.py   # Content management
+│   │   │   │   ├── learning.py  # Learning sessions
+│   │   │   │   ├── lessons.py   # Lesson generation
+│   │   │   │   ├── quizzes.py   # Quiz generation
+│   │   │   │   ├── progress.py  # Progress tracking
+│   │   │   │   ├── dashboard.py # Dashboard analytics
+│   │   │   │   └── ai_tutor.py  # AI tutor interactions
+│   │   │   └── api.py           # API router configuration
+│   │   └── dependencies.py      # API dependencies
+│   ├── core/                    # Core functionality
+│   │   ├── config.py           # Application configuration
+│   │   ├── database.py         # Database setup
+│   │   └── security.py         # Security utilities
+│   ├── models/                  # Database models
+│   │   ├── user.py             # User and authentication
+│   │   ├── student.py          # Student profiles
+│   │   ├── content.py          # Learning content
+│   │   ├── learning_session.py # Learning sessions
+│   │   ├── quiz_attempt.py     # Quiz attempts
+│   │   ├── progress.py         # Progress tracking
+│   │   └── user_analytics.py   # User analytics
+│   ├── services/                # Business logic services
+│   │   ├── advanced_ai_generator.py # AI content generation
+│   │   ├── openai_service.py   # OpenAI API integration
+│   │   ├── ai_models.py        # Local AI models (Ollama)
 │   │   ├── adaptive_learning.py # Adaptive algorithms
+│   │   ├── progress_service.py # Progress tracking
+│   │   ├── recommendation_engine.py # Content recommendations
 │   │   └── websocket_manager.py # WebSocket management
-│   └── main.py                  # Application entry point
-├── frontend/                     # React frontend application
-│   ├── public/                  # Static assets
+│   ├── main.py                 # Application entry point
+│   └── requirements.txt        # Backend dependencies
+├── frontend/                    # React frontend application
+│   ├── public/                 # Static assets
 │   ├── src/
-│   │   ├── components/          # React components
-│   │   │   ├── auth/            # Authentication components
-│   │   │   ├── dashboard/       # Dashboard components
-│   │   │   ├── learning/        # Learning session components
-│   │   │   ├── progress/        # Progress tracking components
-│   │   │   ├── ai-tutor/        # AI tutor chat components
-│   │   │   ├── layout/          # Layout components
-│   │   │   └── common/          # Shared components
-│   │   ├── contexts/            # React contexts
-│   │   ├── services/            # API services
-│   │   └── App.tsx              # Main App component
-│   ├── package.json             # Frontend dependencies
-│   └── .env                     # Frontend environment variables
-├── requirements.txt             # Python dependencies
-├── package.json                 # Development scripts
-├── run-dev.sh                   # Backend startup script
-├── setup.sh                     # Automated setup script
-├── .env.example                 # Environment template
-├── .github/
-│   └── copilot-instructions.md  # GitHub Copilot guidance
-└── README.md                    # Project documentation
+│   │   ├── components/         # React components
+│   │   │   ├── auth/           # Authentication components
+│   │   │   ├── dashboard/      # Dashboard components
+│   │   │   ├── learning/       # Learning session components
+│   │   │   │   ├── LearningSession.tsx # Main learning interface
+│   │   │   │   ├── QuizDisplay.tsx     # Quiz interface
+│   │   │   │   └── QuizResults.tsx     # Quiz results
+│   │   │   ├── progress/       # Progress tracking components
+│   │   │   ├── ai-tutor/       # AI tutor chat components
+│   │   │   ├── layout/         # Layout components
+│   │   │   ├── profile/        # User profile components
+│   │   │   └── common/         # Shared components
+│   │   ├── contexts/           # React contexts
+│   │   │   └── AuthContext.tsx # Authentication context
+│   │   ├── services/           # API services
+│   │   │   └── api.ts          # API client
+│   │   └── App.tsx             # Main App component
+│   ├── package.json            # Frontend dependencies
+│   └── .env                    # Frontend environment variables
+├── alembic/                    # Database migrations
+├── requirements.txt            # Python dependencies
+├── alembic.ini                # Alembic configuration
+├── .gitignore                 # Git ignore rules
+├── LICENSE                    # MIT License
+└── README.md                  # Project documentation
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8+
-- Node.js 14+ (for frontend and development scripts)
-- PostgreSQL (for production) or SQLite (for development)
-- Gemini API key (recommended) or OpenAI API key
+- Node.js 16+ (for frontend)
+- SQLite (included, no setup required)
+- OpenAI API key (optional, for enhanced AI features)
+- Ollama (optional, for local AI models)
 
 ### Backend Setup
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd Learning-Tutor
+   cd Tutor
    ```
 
 2. **Set up Python environment**
@@ -124,43 +138,26 @@ Learning-Tutor/
    pip install -r requirements.txt
    ```
 
-3. **Configure environment variables**
+3. **Initialize the database**
    ```bash
-   # Create .env file
-   cp .env.example .env
-   
-   # Edit .env with your settings (minimum required):
-   DATABASE_URL=sqlite:///./learning_tutor.db
-   SECRET_KEY=your-secret-key-here
-   
-   # Choose your AI provider and configure accordingly:
-   AI_PROVIDER=gemini  # or "openai"
-   
-   # For Gemini (recommended):
-   GEMINI_API_KEY=your-gemini-api-key
-   GEMINI_MODEL=gemini-1.5-flash
-   
-   # For OpenAI (alternative):
-   OPENAI_API_KEY=your-openai-api-key
-   OPENAI_MODEL=gpt-3.5-turbo
+   # Run database migrations
+   alembic upgrade head
    ```
-   
-   **Getting API Keys:**
-   - **Gemini API**: Get your free API key at [Google AI Studio](https://aistudio.google.com/app/apikey)
-   - **OpenAI API**: Get your API key at [OpenAI Platform](https://platform.openai.com/api-keys)
 
-4. **Test your AI configuration (optional but recommended)**
+4. **Configure environment variables (optional)**
    ```bash
-   # Test Gemini integration
-   python test_gemini.py
+   # For enhanced AI features, set OpenAI API key:
+   export OPENAI_API_KEY=your-openai-api-key
    
-   # If using OpenAI, you can test manually through the web interface
+   # For local AI models, install Ollama:
+   # curl -fsSL https://ollama.ai/install.sh | sh
+   # ollama pull llama3:8b
    ```
 
 5. **Start the backend server**
    ```bash
-   npm run dev
-   # Or directly: source venv/bin/activate && uvicorn app.main:app --reload
+   # Activate virtual environment and start server
+   source venv/bin/activate && uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
 ### Frontend Setup
@@ -175,16 +172,10 @@ Learning-Tutor/
    npm install
    ```
 
-3. **Configure frontend environment**
+3. **Start the frontend development server**
    ```bash
-   # Create .env file (already configured)
-   # REACT_APP_API_URL=http://localhost:8000/api/v1
-   ```
-
-4. **Start the frontend development server**
-   ```bash
-   npm start
-   # Automatically opens http://localhost:3001 (or next available port)
+   npm run dev
+   # Automatically opens http://localhost:5173 (Vite default)
    ```
 
 ### Full-Stack Development
@@ -192,17 +183,17 @@ Learning-Tutor/
 To run both backend and frontend simultaneously:
 ```bash
 # Terminal 1 - Backend
-npm run dev
+source venv/bin/activate && uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Terminal 2 - Frontend
-cd frontend && npm start
+cd frontend && npm run dev
 ```
 
 ### Access the Application
 - **Backend API**: http://localhost:8000
   - API Documentation: http://localhost:8000/docs
   - Health Check: http://localhost:8000/health
-- **Frontend**: http://localhost:3001 (or displayed port)
+- **Frontend**: http://localhost:5173 (Vite default)
 - **WebSocket**: ws://localhost:8000/ws
 
 ## 📚 API Documentation
@@ -212,77 +203,84 @@ cd frontend && npm start
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/refresh` - Token refresh
 - `GET /api/v1/auth/me` - Get current user
+- `POST /api/v1/auth/demo/login` - Demo login (for testing)
 
-### Student Management
-- `GET /api/v1/students/profile` - Get student profile
-- `PUT /api/v1/students/profile` - Update profile
-- `GET /api/v1/students/dashboard` - Learning dashboard
-- `GET /api/v1/students/achievements` - View achievements
-
-### Content Management
-- `GET /api/v1/content/categories` - Browse content categories
-- `GET /api/v1/content/search` - Search content
-- `GET /api/v1/content/recommendations` - Get recommendations
-- `POST /api/v1/content/{id}/complete` - Mark content complete
-
-### Learning Sessions
+### Learning & Content
+- `POST /api/v1/lessons/generate` - Generate AI lesson content
+- `POST /api/v1/quizzes/generate` - Generate AI quiz
+- `POST /api/v1/quizzes/submit` - Submit quiz answers
 - `POST /api/v1/learning/sessions` - Start learning session
 - `GET /api/v1/learning/sessions/{id}` - Get session details
-- `POST /api/v1/learning/sessions/{id}/interactions` - Log interaction
-- `POST /api/v1/learning/sessions/{id}/complete` - Complete session
-
-### Progress Tracking
-- `GET /api/v1/progress/overview` - Progress overview
-- `GET /api/v1/progress/detailed` - Detailed progress
-- `GET /api/v1/progress/mastery-map` - Visual mastery map
-- `GET /api/v1/progress/analytics` - Progress analytics
 
 ### AI Tutor
+- `POST /api/v1/ai-tutor/ask-quick` - Quick AI tutor question
 - `POST /api/v1/ai-tutor/chat` - Chat with AI tutor
-- `POST /api/v1/ai-tutor/exercises` - Generate adaptive exercises
-- `POST /api/v1/ai-tutor/submit-answer` - Submit exercise answer
 - `WebSocket /ws` - Real-time tutoring session
+
+### Dashboard & Progress
+- `GET /api/v1/dashboard/overview` - Dashboard overview
+- `GET /api/v1/progress/overview` - Progress overview
+- `GET /api/v1/students/profile` - Student profile
+
+### Health & Monitoring
+- `GET /health` - System health check
+- `GET /api/v1/docs` - Interactive API documentation
 
 ## 🧠 AI & Machine Learning Features
 
-### Adaptive Learning Engine
-The system uses advanced ML algorithms to:
-- **Personalize Learning Paths**: Analyzes student performance to recommend optimal learning sequences
-- **Adjust Difficulty**: Dynamically modifies content difficulty based on mastery levels
-- **Identify Knowledge Gaps**: Detects prerequisite skills that need reinforcement
-- **Predict Learning Outcomes**: Forecasts student success probability for different content
+### Multi-Provider AI Support
+- **OpenAI Integration**: GPT models for high-quality content generation and tutoring
+- **Local AI Models**: Ollama integration with Llama 3, Mistral, and Qwen models
+- **Fallback System**: Automatic fallback to local models when API is unavailable
+- **Privacy-First Option**: Complete local operation without external API calls
 
-### AI Tutor Capabilities
-- **Natural Language Processing**: Understands student questions in natural language
-- **Contextual Responses**: Provides relevant explanations based on current learning context
-- **Socratic Method**: Guides students to discover answers through strategic questioning
-- **Multi-modal Explanations**: Supports text, diagrams, and step-by-step problem solving
+### AI Content Generation
+- **Dynamic Lesson Creation**: AI-generated lessons with structured content, examples, and key concepts
+- **Adaptive Quiz Generation**: Multiple question types (multiple choice, true/false, short answer)
+- **Contextual Explanations**: AI explanations tailored to student's learning level
+- **Real-time Chat**: Interactive AI tutor for immediate help and guidance
 
-### Analytics & Insights
-- **Learning Pattern Recognition**: Identifies optimal study times and preferences
-- **Engagement Scoring**: Measures focus, motivation, and learning velocity
-- **Performance Prediction**: Early warning system for students at risk
-- **Curriculum Optimization**: Data-driven insights for content improvement
+### Learning Analytics
+- **Progress Tracking**: Comprehensive tracking of learning sessions and quiz performance
+- **Performance Analytics**: Detailed insights into learning patterns and achievements
+- **Adaptive Recommendations**: AI-driven content suggestions based on performance
+- **Engagement Metrics**: Tracking of learning engagement and session duration
+
+## 🎮 Demo & Testing
+
+### Quick Demo
+1. **Start the application** (follow Quick Start guide above)
+2. **Access the frontend** at http://localhost:5173
+3. **Click "Try Demo"** to log in with demo credentials
+4. **Explore features**:
+   - Create AI-generated lessons
+   - Take interactive quizzes
+   - Chat with the AI tutor
+   - View progress dashboard
+
+### Demo Features
+- **No registration required** - Use demo login for immediate access
+- **Full AI functionality** - Experience all AI features without setup
+- **Sample content** - Pre-generated examples to explore
+- **Interactive learning** - Complete learning sessions with quizzes
 
 ## 🛠️ Development
 
 ### Available Scripts
 ```bash
-# Development
-npm run dev          # Start development server
-npm run test         # Run tests
-npm run lint         # Lint code
-npm run format       # Format code
+# Backend Development
+source venv/bin/activate && uvicorn backend.main:app --reload  # Start backend
+alembic upgrade head                                          # Run migrations
+alembic revision --autogenerate -m "Description"             # Create migration
 
-# Database
-npm run db:upgrade   # Run migrations
-npm run db:downgrade # Rollback migration
-npm run db:reset     # Reset database
-npm run db:seed      # Seed with sample data
+# Frontend Development
+cd frontend && npm run dev    # Start frontend dev server
+cd frontend && npm run build  # Build for production
+cd frontend && npm run lint   # Lint frontend code
 
-# Production
-npm start           # Start production server
-npm run build       # Build for production
+# Testing
+pytest                        # Run backend tests
+pytest --cov=backend         # Run with coverage
 ```
 
 ### Testing
@@ -315,17 +313,17 @@ alembic downgrade -1
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `DATABASE_URL` | Database connection string | `sqlite:///./learning_tutor.db` |
-| `SECRET_KEY` | JWT secret key | Required |
-| `OPENAI_API_KEY` | OpenAI API key | Required |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
-| `DEBUG` | Enable debug mode | `False` |
-| `CORS_ORIGINS` | Allowed CORS origins | `["*"]` |
+| `SECRET_KEY` | JWT secret key | `dev-secret-key-change-in-production-12345` |
+| `OPENAI_API_KEY` | OpenAI API key | Optional (for enhanced features) |
+| `AI_PROVIDER` | AI provider preference | `openai` |
+| `DEBUG` | Enable debug mode | `True` |
+| `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:3000,http://localhost:5173` |
 
 ### Advanced Configuration
-- **Rate Limiting**: Configure in `app/core/config.py`
-- **WebSocket Settings**: Modify `app/services/websocket_manager.py`
-- **AI Model Settings**: Adjust in `app/services/ai_tutor_service.py`
-- **Learning Algorithms**: Customize in `app/services/adaptive_learning.py`
+- **Rate Limiting**: Configure in `backend/core/config.py`
+- **WebSocket Settings**: Modify `backend/services/websocket_manager.py`
+- **AI Model Settings**: Adjust in `backend/services/advanced_ai_generator.py`
+- **Learning Algorithms**: Customize in `backend/services/adaptive_learning.py`
 
 ## 📊 Monitoring & Analytics
 
@@ -413,23 +411,30 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🔮 Roadmap
 
-### Phase 1 (Current)
-- ✅ Core backend API
-- ✅ AI tutoring system
-- ✅ Progress tracking
+### Phase 1 (Completed ✅)
+- ✅ Core backend API with FastAPI
+- ✅ AI tutoring system with OpenAI & Ollama support
+- ✅ Progress tracking and analytics
 - ✅ Adaptive learning engine
+- ✅ React frontend with Material-UI
+- ✅ Interactive learning sessions
+- ✅ AI-generated lessons and quizzes
+- ✅ Real-time chat with AI tutor
+- ✅ Demo mode for easy testing
 
-### Phase 2 (Next)
-- 🔄 Frontend React application
-- 🔄 Mobile app development
+### Phase 2 (In Progress 🔄)
+- 🔄 Enhanced mobile responsiveness
 - 🔄 Advanced analytics dashboard
 - 🔄 Collaborative learning features
+- 🔄 User profile management
+- 🔄 Content library expansion
 
-### Phase 3 (Future)
+### Phase 3 (Future 📋)
 - 📋 Multi-language support
-- 📋 Advanced AI models
+- 📋 Advanced AI models integration
 - 📋 Integration with LMS platforms
 - 📋 Offline learning capabilities
+- 📋 Mobile app development
 
 ---
 
