@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any, List
 import logging
 
-from backend.api.dependencies import get_current_user, get_db
+from backend.api.dependencies import get_current_user
+from backend.core.database import get_db
 from backend.services.progress_service import progress_service
 from backend.models.user import User
 

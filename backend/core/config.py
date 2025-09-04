@@ -23,10 +23,10 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
     ALLOWED_HOSTS: List[str] = ["*"]
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:8080"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:8080,http://127.0.0.1:3000"
     
     # Database settings
-    DATABASE_URL: str = "postgresql://klassy:MioNuG8fcHpCU6tVBoJW0rhdFSjLT6as@dpg-d29o447diees73d0ltl0-a.singapore-postgres.render.com/daviddb_c0ni"
+    DATABASE_URL: str = "sqlite:///./learning_tutor.db"
     DATABASE_ECHO: bool = False
     
     # Redis settings
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # AI/ML Service settings
-    AI_PROVIDER: str = "gemini"  # "openai", "gemini", or "huggingface"
+    AI_PROVIDER: str = "openai"  # "openai", "gemini", or "huggingface"
     
     # OpenAI settings
     OPENAI_API_KEY: Optional[str] = None

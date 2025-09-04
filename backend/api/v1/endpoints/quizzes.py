@@ -34,11 +34,11 @@ async def generate_quiz(
         
         # Generate quiz using advanced AI
         quiz_content = await advanced_ai_generator.generate_quiz(
-            subject=subject,
             topic=topic,
-            difficulty_level=difficulty,
+            subject=subject,
             num_questions=num_questions,
-            quiz_type=quiz_type
+            difficulty_level=difficulty,
+            question_types=[quiz_type] if quiz_type else ["multiple_choice"]
         )
         
         if not quiz_content:

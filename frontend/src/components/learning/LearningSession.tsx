@@ -26,6 +26,8 @@ import {
   Divider
 } from '@mui/material';
 import { learningAPI, quizAPI, lessonAPI } from '../../services/api';
+import QuizDisplay from './QuizDisplay';
+import QuizResults from './QuizResults';
 
 interface Question {
   id: string;
@@ -85,6 +87,8 @@ const LearningSession: React.FC = () => {
     topic: '',
     session_type: 'practice'
   });
+  const [showQuizResults, setShowQuizResults] = useState(false);
+  const [quizResults, setQuizResults] = useState<any>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -216,7 +220,14 @@ const LearningSession: React.FC = () => {
         const quizResponse = await quizAPI.generateQuiz(quizRequest);
         const quizData = quizResponse.data;
         
-        const questions: Question[] = quizData.questions.map((q: any, index: number) => ({
+        // Handle the response structure: { success: true, quiz: { questions: [...] } }
+        const questionsData = quizData.quiz?.questions || quizData.questions || [];
+        
+        if (!questionsData || questionsData.length === 0) {
+          throw new Error('No questions generated');
+        }
+        
+        const questions: Question[] = questionsData.map((q: any, index: number) => ({
           id: `q_${index}`,
           question: q.question,
           options: q.options || [q.option_a, q.option_b, q.option_c, q.option_d],
@@ -225,13 +236,22 @@ const LearningSession: React.FC = () => {
           difficulty: q.difficulty_level || 0.5
         }));
         
-        const sessionResponse = await learningAPI.createSession({
-          content_id: 1,
-          session_type: newSessionData.session_type
-        });
+        // Try to create learning session, but don't fail if it doesn't work
+        let sessionId = Date.now().toString();
+        try {
+          const sessionResponse = await learningAPI.createSession({
+            content_id: 1,
+            session_type: newSessionData.session_type,
+            subject_area: newSessionData.subject_area,
+            topic: newSessionData.topic
+          });
+          sessionId = sessionResponse.data.id || sessionId;
+        } catch (sessionError) {
+          console.warn('Learning session creation failed, continuing with quiz:', sessionError);
+        }
         
         newSession = {
-          id: sessionResponse.data.id || Date.now().toString(),
+          id: sessionId,
           subject_area: newSessionData.subject_area,
           topic: newSessionData.topic,
           session_type: newSessionData.session_type as 'lesson' | 'quiz' | 'practice',
@@ -294,23 +314,31 @@ const LearningSession: React.FC = () => {
     
     try {
       if (activeQuizAttempt && activeQuizAttempt.id) {
-        await quizAPI.submitQuiz({
-          quiz_data: activeQuizAttempt,
-          answers: { [currentQuestion.id]: selectedAnswer },
-          time_spent_minutes: responseTime ? Math.round(responseTime / 60) : 1
-        });
+        try {
+          await quizAPI.submitQuiz({
+            quiz_data: activeQuizAttempt,
+            answers: { [currentQuestion.id]: selectedAnswer },
+            time_spent_minutes: responseTime ? Math.round(responseTime / 60) : 1
+          });
+        } catch (quizError) {
+          console.warn('Quiz submission failed, continuing:', quizError);
+        }
       }
       
       if (activeSession.id && parseInt(activeSession.id)) {
-        await learningAPI.logInteraction(parseInt(activeSession.id), {
-          question_id: currentQuestion.id,
-          answer: selectedAnswer,
-          is_correct: isCorrect,
-          time_spent: responseTime || 30
-        });
+        try {
+          await learningAPI.logInteraction(parseInt(activeSession.id), {
+            question_id: currentQuestion.id,
+            answer: selectedAnswer,
+            is_correct: isCorrect,
+            time_spent: responseTime || 30
+          });
+        } catch (interactionError) {
+          console.warn('Interaction logging failed, continuing:', interactionError);
+        }
       }
     } catch (error) {
-      console.error('Error logging interaction:', error);
+      console.error('Error in answer submission:', error);
     }
   };
   
@@ -360,7 +388,14 @@ const LearningSession: React.FC = () => {
         const quizResponse = await quizAPI.generateQuiz(quizRequest);
         const quizData = quizResponse.data;
         
-        const questions: Question[] = quizData.questions.map((q: any, index: number) => ({
+        // Handle the response structure: { success: true, quiz: { questions: [...] } }
+        const questionsData = quizData.quiz?.questions || quizData.questions || [];
+        
+        if (!questionsData || questionsData.length === 0) {
+          throw new Error('No questions generated');
+        }
+        
+        const questions: Question[] = questionsData.map((q: any, index: number) => ({
           id: `q_${index}`,
           question: q.question,
           options: q.options || [q.option_a, q.option_b, q.option_c, q.option_d],
@@ -369,7 +404,11 @@ const LearningSession: React.FC = () => {
           difficulty: q.difficulty_level || 0.5
         }));
         
-        setActiveQuizAttempt({ id: quizData.quiz_id, ...quizData });
+        setActiveQuizAttempt({ 
+          id: quizData.quiz?.quiz_id || quizData.quiz_id || `quiz_${Date.now()}`, 
+          ...quizData.quiz || quizData,
+          questions: questions
+        });
         setCurrentQuestions(questions);
         setActiveSession(session);
         setCurrentQuestion(questions[0]);
@@ -386,6 +425,35 @@ const LearningSession: React.FC = () => {
     };
     
     generateQuestionsForSession();
+  };
+
+  const handleQuizComplete = (results: any) => {
+    setQuizResults(results);
+    setShowQuizResults(true);
+    setActiveSession(null);
+    setCurrentQuestions([]);
+    setCurrentQuestion(null);
+    setActiveQuizAttempt(null);
+  };
+
+  const handleQuizRetake = () => {
+    setShowQuizResults(false);
+    setQuizResults(null);
+    // Restart the quiz with the same questions
+    if (activeQuizAttempt) {
+      setCurrentQuestions(activeQuizAttempt.questions || []);
+      setCurrentQuestion(activeQuizAttempt.questions?.[0] || null);
+      setActiveSession(activeQuizAttempt);
+    }
+  };
+
+  const handleQuizClose = () => {
+    setShowQuizResults(false);
+    setQuizResults(null);
+    setActiveSession(null);
+    setCurrentQuestions([]);
+    setCurrentQuestion(null);
+    setActiveQuizAttempt(null);
   };
 
   const pauseSession = async () => {
@@ -979,7 +1047,7 @@ const LearningSession: React.FC = () => {
           color: 'white',
           textAlign: 'center'
         }}>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
             🚀 Create AI Learning Session
           </Typography>
           <Typography variant="body1" sx={{ mt: 1, opacity: 0.9 }}>
@@ -1100,6 +1168,49 @@ const LearningSession: React.FC = () => {
           {error}
         </Alert>
       </Snackbar>
+
+      {/* Quiz Display Overlay */}
+      {activeSession && activeSession.session_type === 'quiz' && currentQuestions.length > 0 && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          bgcolor: 'rgba(0,0,0,0.8)', 
+          zIndex: 9999,
+          overflow: 'auto',
+          py: 2
+        }}>
+          <QuizDisplay
+            questions={currentQuestions}
+            quizId={activeQuizAttempt?.id || 'quiz_1'}
+            onComplete={handleQuizComplete}
+            onClose={handleQuizClose}
+          />
+        </Box>
+      )}
+
+      {/* Quiz Results Overlay */}
+      {showQuizResults && quizResults && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          bgcolor: 'rgba(0,0,0,0.8)', 
+          zIndex: 9999,
+          overflow: 'auto',
+          py: 2
+        }}>
+          <QuizResults
+            results={quizResults}
+            onRetake={handleQuizRetake}
+            onClose={handleQuizClose}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

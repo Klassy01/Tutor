@@ -417,6 +417,16 @@ class EducationalAIManager:
         """Generate lesson content - compatibility method."""
         return await self.generate_lesson(subject, topic, difficulty)
 
+    
+    def get_provider_info(self):
+        """Get AI provider information - compatibility method."""
+        return {
+            "available_models": list(local_ai_manager.available_models.keys()),
+            "educational_focus": "Local AI models for privacy-first learning",
+            "content_types": ["lesson", "quiz", "chat", "explanation"],
+            "provider": "local_ollama"
+        }
+
 
 # Global manager instance
 educational_ai_manager = EducationalAIManager()

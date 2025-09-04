@@ -250,7 +250,7 @@ async def get_current_user(
             detail="User not found"
         )
     
-    return UserResponse.from_orm(user)
+    return UserResponse.model_validate(user)
 
 
 @router.post("/logout")
@@ -369,8 +369,8 @@ async def demo_login(login_data: dict):
         
         # For demo purposes, always return a successful login with a mock token
         # In a real system, this would verify against the database
-        access_token = create_access_token(data={"sub": "1"})
-        refresh_token = create_refresh_token(data={"sub": "1"})
+        access_token = create_access_token(subject="1")
+        refresh_token = create_refresh_token(subject="1")
         
         return {
             "access_token": access_token,
@@ -392,8 +392,8 @@ async def demo_register(user_data: dict):
     """Demo registration endpoint."""
     try:
         # For demo purposes, always return successful registration
-        access_token = create_access_token(data={"sub": "1"})
-        refresh_token = create_refresh_token(data={"sub": "1"})
+        access_token = create_access_token(subject="1")
+        refresh_token = create_refresh_token(subject="1")
         
         return {
             "access_token": access_token,

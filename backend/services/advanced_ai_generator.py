@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 from backend.services.ai_models import ai_model_manager
+from backend.services.openai_service import openai_service
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +55,10 @@ Topic: {topic}
 Subject: {subject}"""
 
             # Try to generate with AI model
-            content = await self.model_manager.generate_text(
+            content = await self.model_manager.generate_content(
                 prompt=prompt,
-                max_tokens=2000,
+                content_type="lesson",
+                max_length=2000,
                 temperature=0.7
             )
             
@@ -149,7 +151,9 @@ For each question, provide:
 3. Correct answer
 4. Detailed explanation
 
-Format as JSON with this structure:
+IMPORTANT: Respond ONLY with valid JSON. No explanations, no markdown, no extra text.
+
+Required JSON format:
 {{
   "questions": [
     {{
@@ -163,21 +167,39 @@ Format as JSON with this structure:
 }}
 
 Topic: {topic}
-Subject: {subject}"""
+Subject: {subject}
+
+Respond with ONLY the JSON object:"""
 
             # Try to generate with AI model
-            response = await self.model_manager.generate_text(
+            response = await self.model_manager.generate_content(
                 prompt=prompt,
-                max_tokens=1500,
+                content_type="quiz",
+                max_length=1500,
                 temperature=0.6
             )
             
             if response and len(response.strip()) > 50:
-                # Try to parse JSON response
+                # Try to parse JSON response with improved error handling
                 import json
+                import re
                 try:
-                    quiz_data = json.loads(response.strip())
+                    # Clean the response - remove any markdown formatting
+                    cleaned_response = response.strip()
+                    if cleaned_response.startswith('```json'):
+                        cleaned_response = cleaned_response[7:]
+                    if cleaned_response.endswith('```'):
+                        cleaned_response = cleaned_response[:-3]
+                    cleaned_response = cleaned_response.strip()
+                    
+                    # Try to extract JSON from the response if it's embedded in text
+                    json_match = re.search(r'\{.*\}', cleaned_response, re.DOTALL)
+                    if json_match:
+                        cleaned_response = json_match.group(0)
+                    
+                    quiz_data = json.loads(cleaned_response)
                     if "questions" in quiz_data and len(quiz_data["questions"]) > 0:
+                        logger.info("✅ Successfully parsed AI-generated quiz JSON")
                         return {
                             "questions": quiz_data["questions"],
                             "generated_by": "ai_model",
@@ -185,8 +207,11 @@ Subject: {subject}"""
                             "topic": topic,
                             "subject": subject
                         }
-                except json.JSONDecodeError:
-                    logger.warning("Failed to parse AI-generated quiz JSON")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Failed to parse AI-generated quiz JSON: {e}")
+                    logger.debug(f"Raw response: {response[:200]}...")
+                except Exception as e:
+                    logger.warning(f"Error processing AI response: {e}")
                     
             raise Exception("AI quiz generation failed or invalid format")
             
@@ -302,9 +327,10 @@ Requirements:
 
 Explanation:"""
 
-            explanation = await self.model_manager.generate_text(
+            explanation = await self.model_manager.generate_content(
                 prompt=prompt,
-                max_tokens=800,
+                content_type="explanation",
+                max_length=800,
                 temperature=0.5
             )
             
@@ -328,15 +354,27 @@ For more detailed explanations, consider reviewing the lesson material and pract
     async def generate_chat_response(
         self,
         message: str,
-        context: str = "",
+        conversation_history: List[Dict[str, str]] = None,
+        subject: str = "General",
         max_tokens: int = 500
     ) -> str:
         """Generate a conversational response for the AI tutor chat"""
         try:
-            prompt = f"""You are an AI tutor. Please respond to this student's question in a helpful, educational manner:
+            # Try OpenAI first if available
+            await openai_service.initialize()
+            if openai_service.initialized:
+                # Build context from conversation history
+                context = ""
+                if conversation_history:
+                    context = "Previous conversation:\n"
+                    for msg in conversation_history[-3:]:  # Last 3 messages for context
+                        role = "Student" if msg["role"] == "user" else "Tutor"
+                        context += f"{role}: {msg['content']}\n"
+                
+                prompt = f"""You are an AI tutor specializing in {subject}. Please respond to this student's question in a helpful, educational manner:
 
 Student Question: {message}
-Context: {context}
+{context}
 
 Requirements:
 - Be friendly and encouraging
@@ -344,32 +382,70 @@ Requirements:
 - Use examples when helpful
 - Keep the response focused and concise
 - Encourage further learning
+- Stay focused on {subject} topics
 
 Response:"""
 
-            response = await self.model_manager.generate_text(
+                response = await openai_service.generate_content(
+                    prompt=prompt,
+                    content_type="chat",
+                    max_tokens=max_tokens,
+                    temperature=0.7
+                )
+                
+                if response and len(response.strip()) > 10:
+                    logger.info("✅ Generated response using OpenAI")
+                    return response.strip()
+            
+            # Fallback to local AI models
+            # Build context from conversation history
+            context = ""
+            if conversation_history:
+                context = "Previous conversation:\n"
+                for msg in conversation_history[-3:]:  # Last 3 messages for context
+                    role = "Student" if msg["role"] == "user" else "Tutor"
+                    context += f"{role}: {msg['content']}\n"
+            
+            prompt = f"""You are an AI tutor specializing in {subject}. Please respond to this student's question in a helpful, educational manner:
+
+Student Question: {message}
+{context}
+
+Requirements:
+- Be friendly and encouraging
+- Provide clear, educational explanations
+- Use examples when helpful
+- Keep the response focused and concise
+- Encourage further learning
+- Stay focused on {subject} topics
+
+Response:"""
+
+            response = await self.model_manager.generate_content(
                 prompt=prompt,
-                max_tokens=max_tokens,
+                content_type="chat",
+                max_length=max_tokens,
                 temperature=0.7
             )
             
             if response and len(response.strip()) > 10:
+                logger.info("✅ Generated response using local AI models")
                 return response.strip()
             else:
                 raise Exception("Generated response too short")
                 
         except Exception as e:
             logger.warning(f"AI chat response generation failed: {e}")
-            return f"""Thank you for your question! I understand you're asking about: "{message}"
+            return f"""Thank you for your question about {subject}! I understand you're asking: "{message}"
 
 While I work on generating a detailed response, here are some key points to consider:
 
-1. **Break down the topic**: Think about the main concepts involved
+1. **Break down the topic**: Think about the main concepts involved in {subject}
 2. **Look for connections**: How does this relate to what you've already learned?  
 3. **Practice examples**: Try working through similar problems or scenarios
-4. **Ask follow-up questions**: What specific aspects would you like to explore further?
+4. **Ask follow-up questions**: What specific aspects of {subject} would you like to explore further?
 
-I'm here to help guide your learning journey. Feel free to ask more specific questions or request examples!"""
+I'm here to help guide your learning journey in {subject}. Feel free to ask more specific questions or request examples!"""
 
 # Create global instance
 advanced_ai_generator = AdvancedAIGenerator()

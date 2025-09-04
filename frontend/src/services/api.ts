@@ -39,6 +39,8 @@ export const authAPI = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
   
+  demoLogin: () => api.post('/auth/demo/login', {}),
+  
   register: (userData: {
     email: string;
     username: string;
@@ -168,8 +170,12 @@ export const contentAPI = {
 };
 
 export const learningAPI = {
-  createSession: (data: { content_id?: number; session_type: string }) =>
-    api.post('/learning/sessions', data),
+  createSession: (data: { 
+    content_id?: number; 
+    session_type: string;
+    subject_area?: string;
+    topic?: string;
+  }) => api.post('/learning/sessions', data),
   
   generateLesson: (data: { subject: string; topic: string; difficulty_level?: string }) =>
     lessonAPI.generateLesson(data),

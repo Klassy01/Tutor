@@ -15,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
+  demoLogin: () => Promise<boolean>;
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
   setUser: (user: User) => void;
@@ -97,6 +98,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const demoLogin = async (): Promise<boolean> => {
+    try {
+      const response = await authAPI.demoLogin();
+      const { access_token } = response.data;
+      
+      localStorage.setItem('token', access_token);
+      setToken(access_token);
+      
+      // Try to get actual user data from backend
+      try {
+        const userResponse = await authAPI.getCurrentUser();
+        setUser(userResponse.data);
+      } catch (userError) {
+        console.error('Failed to get user data after demo login, using fallback:', userError);
+        // Fallback to demo user info
+        const fallbackUser: User = {
+          id: 1,
+          email: 'demo@example.com',
+          username: 'demo',
+          first_name: 'Demo',
+          last_name: 'User',
+          is_active: true
+        };
+        setUser(fallbackUser);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Demo login failed:', error);
+      return false;
+    }
+  };
+
   const register = async (userData: any): Promise<boolean> => {
     try {
       const response = await authAPI.register(userData);
@@ -140,6 +174,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     token,
     login,
+    demoLogin,
     register,
     logout,
     setUser,

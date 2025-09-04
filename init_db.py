@@ -20,7 +20,12 @@ from backend.models import user, student, content, learning_session, progress, u
 
 def create_database():
     """Create the database if it doesn't exist."""
-    # Create engine without database name
+    # For SQLite, the database file is created automatically
+    if settings.DATABASE_URL.startswith("sqlite"):
+        print("✅ Using SQLite database (file will be created automatically)")
+        return
+    
+    # For PostgreSQL, create the database if it doesn't exist
     base_url = settings.DATABASE_URL.rsplit('/', 1)[0]
     db_name = settings.DATABASE_URL.rsplit('/', 1)[1]
     
@@ -65,12 +70,10 @@ def init_database():
         
         print("✅ Database initialization completed!")
         print(f"📊 Database URL: {settings.DATABASE_URL}")
-        print("
-🚀 Database is ready for the Learning Tutor platform!")
+        print("🚀 Database is ready for the Learning Tutor platform!")
         
         # Print created tables
-        print("
-📋 Created tables:")
+        print("📋 Created tables:")
         for table_name in Base.metadata.tables.keys():
             print(f"  - {table_name}")
             
@@ -87,20 +90,16 @@ if __name__ == "__main__":
     try:
         init_database()
         
-        print("
-" + "=" * 50)
+        print("\n" + "=" * 50)
         print("🎉 Success! Your Learning Tutor database is ready!")
-        print("
-🔧 Next steps:")
+        print("\n🔧 Next steps:")
         print("1. Start the backend server: python -m backend.main")
         print("2. Start the frontend: cd frontend && npm run dev")
         print("3. Open your browser to http://localhost:3000")
         
     except Exception as e:
-        print(f"
-💥 Fatal error: {e}")
-        print("
-🔧 Troubleshooting tips:")
+        print(f"\n💥 Fatal error: {e}")
+        print("\n🔧 Troubleshooting tips:")
         print("1. Make sure PostgreSQL is running")
         print("2. Check your database connection settings")
         print("3. Verify your database credentials")
