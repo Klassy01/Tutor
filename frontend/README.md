@@ -9,7 +9,6 @@ React-based frontend for the AI-Powered Personal Tutor system, built with TypeSc
 - **Quiz System**: Interactive quizzes with multiple question types and instant feedback
 - **AI Tutor Chat**: Real-time chat interface with AI tutor for immediate help
 - **Progress Dashboard**: Comprehensive progress tracking and analytics
-- **Demo Mode**: Instant access without registration for testing
 
 ### User Experience
 - **Responsive Design**: Mobile-first design with Material-UI components
@@ -56,25 +55,7 @@ React-based frontend for the AI-Powered Personal Tutor system, built with TypeSc
 
 4. **Access the application**
    - Open http://localhost:5173 in your browser
-   - Click "Try Demo" for instant access
-   - Or register/login to create an account
-
-## 🎮 Demo Mode
-
-### Quick Demo Access
-1. **Start the application** (follow Quick Start above)
-2. **Click "Try Demo"** on the login page
-3. **Explore features**:
-   - Create AI-generated lessons
-   - Take interactive quizzes
-   - Chat with the AI tutor
-   - View progress dashboard
-
-### Demo Features
-- **No registration required** - Instant access with demo credentials
-- **Full functionality** - All features available in demo mode
-- **Sample data** - Pre-populated with example content
-- **Reset capability** - Fresh start for each demo session
+   - Register/login to create an account and start learning
 
 ## 🧩 Key Components
 

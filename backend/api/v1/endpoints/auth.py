@@ -123,16 +123,14 @@ async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
             refresh_token=refresh_token,
             expires_in=1800  # 30 minutes
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 400) as they are expected
+        raise
     except Exception as e:
-        # Return demo tokens for development (database unavailable)
-        demo_user_id = "1"
-        access_token = create_access_token(subject=demo_user_id)
-        refresh_token = create_refresh_token(subject=demo_user_id)
-        
-        return Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=1800  # 30 minutes
+        # Only catch unexpected exceptions and convert to 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Registration service temporarily unavailable"
         )
 
 
@@ -173,16 +171,14 @@ async def login_user(user_credentials: UserLogin, db: Session = Depends(get_db))
             refresh_token=refresh_token,
             expires_in=1800  # 30 minutes
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 401, 400) as they are expected
+        raise
     except Exception as e:
-        # Return demo tokens for development (database unavailable)
-        demo_user_id = "1"
-        access_token = create_access_token(subject=demo_user_id)
-        refresh_token = create_refresh_token(subject=demo_user_id)
-        
-        return Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=1800  # 30 minutes
+        # Only catch unexpected exceptions and convert to 500
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Authentication service temporarily unavailable"
         )
 
 
@@ -360,66 +356,3 @@ async def verify_access_token(
     }
 
 
-@router.post("/demo/login")
-async def demo_login(login_data: dict):
-    """Demo login endpoint that creates or logs in users automatically."""
-    try:
-        email = login_data.get("email", "demo@example.com")
-        password = login_data.get("password", "demo123")
-        
-        # For demo purposes, always return a successful login with a mock token
-        # In a real system, this would verify against the database
-        access_token = create_access_token(subject="1")
-        refresh_token = create_refresh_token(subject="1")
-        
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
-    except Exception as e:
-        return {
-            "access_token": "demo_token_12345",
-            "refresh_token": "demo_refresh_12345", 
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
-
-
-@router.post("/demo/register")
-async def demo_register(user_data: dict):
-    """Demo registration endpoint."""
-    try:
-        # For demo purposes, always return successful registration
-        access_token = create_access_token(subject="1")
-        refresh_token = create_refresh_token(subject="1")
-        
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "expires_in": 3600
-        }
-    except Exception as e:
-        return {
-            "access_token": "demo_token_12345",
-            "refresh_token": "demo_refresh_12345",
-            "token_type": "bearer", 
-            "expires_in": 3600
-        }
-
-
-@router.get("/demo/me")
-async def demo_current_user():
-    """Demo current user endpoint."""
-    return {
-        "id": 1,
-        "email": "demo@example.com",
-        "username": "demo_user",
-        "first_name": "Demo",
-        "last_name": "User",
-        "user_type": "student",
-        "is_active": True,
-        "is_verified": True
-    }

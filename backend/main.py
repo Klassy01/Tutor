@@ -192,7 +192,8 @@ async def health_check():
     try:
         # Check database connection
         from backend.core.database import get_db
-        next(get_db()).execute("SELECT 1")
+        from sqlalchemy import text
+        next(get_db()).execute(text("SELECT 1"))
         db_status = "healthy"
     except Exception as e:
         db_status = f"unhealthy: {str(e)}"
@@ -345,7 +346,7 @@ async def send_learning_reminders():
             await asyncio.sleep(3600)  # Every hour
             
             # This would query the database for students who need reminders
-            # For demo purposes, we'll just log
+            # Log the error
             logger.info("📅 Checking for learning reminders...")
             
             # Example: Send reminder to active connections

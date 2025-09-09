@@ -23,7 +23,7 @@ A comprehensive, adaptive learning platform that provides personalized AI tutori
 ### Backend Stack
 - **FastAPI**: High-performance async Python web framework
 - **SQLAlchemy + Alembic**: ORM and database migrations
-- **SQLite**: Development database (PostgreSQL ready for production)
+- **SQLite**: Lightweight, file-based database
 - **WebSocket**: Real-time communication
 - **JWT Authentication**: Secure token-based authentication
 
@@ -73,7 +73,7 @@ Tutor/
 │   │   └── user_analytics.py   # User analytics
 │   ├── services/                # Business logic services
 │   │   ├── advanced_ai_generator.py # AI content generation
-│   │   ├── openai_service.py   # OpenAI API integration
+│   │   ├── local_ai_models.py  # Local AI models (Ollama)
 │   │   ├── ai_models.py        # Local AI models (Ollama)
 │   │   ├── adaptive_learning.py # Adaptive algorithms
 │   │   ├── progress_service.py # Progress tracking
@@ -146,12 +146,11 @@ Tutor/
 
 4. **Configure environment variables (optional)**
    ```bash
-   # For enhanced AI features, set OpenAI API key:
-   export OPENAI_API_KEY=your-openai-api-key
-   
    # For local AI models, install Ollama:
-   # curl -fsSL https://ollama.ai/install.sh | sh
-   # ollama pull llama3:8b
+   curl -fsSL https://ollama.ai/install.sh | sh
+   ollama pull llama3:8b
+   ollama pull mistral:7b
+   ollama pull qwen2.5:7b
    ```
 
 5. **Start the backend server**
@@ -203,7 +202,6 @@ cd frontend && npm run dev
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/refresh` - Token refresh
 - `GET /api/v1/auth/me` - Get current user
-- `POST /api/v1/auth/demo/login` - Demo login (for testing)
 
 ### Learning & Content
 - `POST /api/v1/lessons/generate` - Generate AI lesson content
@@ -228,11 +226,11 @@ cd frontend && npm run dev
 
 ## 🧠 AI & Machine Learning Features
 
-### Multi-Provider AI Support
-- **OpenAI Integration**: GPT models for high-quality content generation and tutoring
-- **Local AI Models**: Ollama integration with Llama 3, Mistral, and Qwen models
-- **Fallback System**: Automatic fallback to local models when API is unavailable
-- **Privacy-First Option**: Complete local operation without external API calls
+### Local AI Models Support
+- **Ollama Integration**: Local AI models with Llama 3, Mistral, and Qwen
+- **Privacy-First**: Complete local operation without external API calls
+- **No API Keys Required**: Works entirely offline with local models
+- **High Performance**: Fast inference with optimized local models
 
 ### AI Content Generation
 - **Dynamic Lesson Creation**: AI-generated lessons with structured content, examples, and key concepts
@@ -246,21 +244,17 @@ cd frontend && npm run dev
 - **Adaptive Recommendations**: AI-driven content suggestions based on performance
 - **Engagement Metrics**: Tracking of learning engagement and session duration
 
-## 🎮 Demo & Testing
+## 🎮 Getting Started
 
-### Quick Demo
+### First Steps
 1. **Start the application** (follow Quick Start guide above)
 2. **Access the frontend** at http://localhost:5173
-3. **Click "Try Demo"** to log in with demo credentials
+3. **Register an account** to create your learning profile
 4. **Explore features**:
    - Create AI-generated lessons
    - Take interactive quizzes
    - Chat with the AI tutor
    - View progress dashboard
-
-### Demo Features
-- **No registration required** - Use demo login for immediate access
-- **Full AI functionality** - Experience all AI features without setup
 - **Sample content** - Pre-generated examples to explore
 - **Interactive learning** - Complete learning sessions with quizzes
 
@@ -314,8 +308,7 @@ alembic downgrade -1
 |----------|-------------|---------|
 | `DATABASE_URL` | Database connection string | `sqlite:///./learning_tutor.db` |
 | `SECRET_KEY` | JWT secret key | `dev-secret-key-change-in-production-12345` |
-| `OPENAI_API_KEY` | OpenAI API key | Optional (for enhanced features) |
-| `AI_PROVIDER` | AI provider preference | `openai` |
+| `AI_PROVIDER` | AI provider preference | `local` |
 | `DEBUG` | Enable debug mode | `True` |
 | `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:3000,http://localhost:5173` |
 
@@ -420,7 +413,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - ✅ Interactive learning sessions
 - ✅ AI-generated lessons and quizzes
 - ✅ Real-time chat with AI tutor
-- ✅ Demo mode for easy testing
 
 ### Phase 2 (In Progress 🔄)
 - 🔄 Enhanced mobile responsiveness

@@ -6,8 +6,6 @@ python-multipart==0.0.6
 # Database & ORM
 sqlalchemy==2.0.23
 alembic==1.12.1
-psycopg2-binary==2.9.9
-asyncpg==0.29.0
 
 # Authentication & Security
 python-jose[cryptography]==3.3.0
@@ -53,15 +51,12 @@ black==23.11.0
 # Production
 gunicorn==21.2.0
 
-# Optional AI providers (can work without API keys)
-openai==1.3.8
-google-generativeai==0.3.2
+# Local AI models only (no external API keys required)
 
 # Additional AI libraries
 datasets==2.14.6
 tokenizers==0.15.0
 accelerate==0.24.1
-huggingface_hub==0.20.1
 
 # Utilities
 aiofiles==23.2.1

@@ -1,7 +1,7 @@
 """
 Advanced AI-Powered Educational Content Generator
 
-Generates high-quality lessons and quizzes using local AI models.
+Generates high-quality lessons and quizzes using local AI models only.
 Uses Ollama (Llama 3, Mistral, Qwen) for privacy-first AI generation.
 """
 
@@ -11,12 +11,11 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 from backend.services.ai_models import ai_model_manager
-from backend.services.openai_service import openai_service
 
 logger = logging.getLogger(__name__)
 
 class AdvancedAIGenerator:
-    """Advanced AI generator using local models via Ollama"""
+    """Advanced AI generator using local models via Ollama only"""
     
     def __init__(self):
         self.model_manager = ai_model_manager
@@ -54,7 +53,7 @@ Generate a well-structured lesson covering:
 Topic: {topic}
 Subject: {subject}"""
 
-            # Try to generate with AI model
+            # Generate with local AI model
             content = await self.model_manager.generate_content(
                 prompt=prompt,
                 content_type="lesson",
@@ -99,305 +98,152 @@ In {subject}, {topic} serves as a foundation for:
 - Business analytics and decision-making
 - Scientific research and discovery
 - Technology development and innovation
-- Problem-solving in professional settings
-- Daily life situations and personal decisions
+- Educational assessment and learning
+- Problem-solving in various industries
 
-## Learning Activities
-To master {topic}, consider these approaches:
-1. **Study the fundamentals** - Start with basic definitions and principles
-2. **Practice with examples** - Work through real-world scenarios
-3. **Apply knowledge** - Use {topic} concepts in practical projects
-4. **Connect concepts** - Link {topic} to other areas in {subject}
-5. **Test understanding** - Complete exercises and assessments
+## Step-by-Step Learning Process
+1. **Understand the Basics**: Start with fundamental concepts and definitions
+2. **Explore Examples**: Look at real-world applications and case studies
+3. **Practice Application**: Work through problems and exercises
+4. **Analyze Results**: Review outcomes and identify patterns
+5. **Build Connections**: Link {topic} to other concepts in {subject}
 
-## Summary
-{topic} is essential for success in {subject}. By understanding its core principles, applications, and methods, you can develop strong analytical skills and solve complex problems effectively. Remember to practice regularly and connect concepts to real-world situations for deeper learning."""
+## Key Takeaways
+- {topic} is essential for understanding {subject}
+- It provides a systematic approach to problem-solving
+- Real-world applications demonstrate its practical value
+- Mastery requires both theoretical knowledge and practical experience
+- Continuous learning and practice lead to deeper understanding
+
+## Next Steps
+To continue learning about {topic}:
+- Explore related concepts in {subject}
+- Practice with real-world examples
+- Connect with other learners and experts
+- Apply knowledge in practical projects
+- Stay updated with latest developments in the field"""
 
             return {
-                "content": content.strip(),
+                "content": content,
                 "generated_by": "template",
                 "timestamp": datetime.now().isoformat(),
                 "topic": topic,
                 "subject": subject
             }
 
-    async def generate_quiz(
-        self, 
-        topic: str, 
-        subject: str,
-        num_questions: int = 5,
-        difficulty_level: str = "intermediate",
-        question_types: List[str] = None
-    ) -> Dict[str, Any]:
-        """Generate quiz questions using local AI models"""
-        
-        if question_types is None:
-            question_types = ["multiple_choice", "true_false"]
-            
-        try:
-            # Create detailed prompt for quiz generation
-            prompt = f"""Generate {num_questions} quiz questions about '{topic}' in {subject}.
-
-Requirements:
-- Difficulty: {difficulty_level}
-- Question types: {', '.join(question_types)}
-- Focus on understanding and application
-- Include clear explanations for answers
-- Make questions practical and relevant
-
-For each question, provide:
-1. Clear, specific question text
-2. Answer options (for multiple choice)
-3. Correct answer
-4. Detailed explanation
-
-IMPORTANT: Respond ONLY with valid JSON. No explanations, no markdown, no extra text.
-
-Required JSON format:
-{{
-  "questions": [
-    {{
-      "question": "Question text here",
-      "type": "multiple_choice",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct_answer": 0,
-      "explanation": "Explanation of why this is correct"
-    }}
-  ]
-}}
-
-Topic: {topic}
-Subject: {subject}
-
-Respond with ONLY the JSON object:"""
-
-            # Try to generate with AI model
-            response = await self.model_manager.generate_content(
-                prompt=prompt,
-                content_type="quiz",
-                max_length=1500,
-                temperature=0.6
-            )
-            
-            if response and len(response.strip()) > 50:
-                # Try to parse JSON response with improved error handling
-                import json
-                import re
-                try:
-                    # Clean the response - remove any markdown formatting
-                    cleaned_response = response.strip()
-                    if cleaned_response.startswith('```json'):
-                        cleaned_response = cleaned_response[7:]
-                    if cleaned_response.endswith('```'):
-                        cleaned_response = cleaned_response[:-3]
-                    cleaned_response = cleaned_response.strip()
-                    
-                    # Try to extract JSON from the response if it's embedded in text
-                    json_match = re.search(r'\{.*\}', cleaned_response, re.DOTALL)
-                    if json_match:
-                        cleaned_response = json_match.group(0)
-                    
-                    quiz_data = json.loads(cleaned_response)
-                    if "questions" in quiz_data and len(quiz_data["questions"]) > 0:
-                        logger.info("✅ Successfully parsed AI-generated quiz JSON")
-                        return {
-                            "questions": quiz_data["questions"],
-                            "generated_by": "ai_model",
-                            "timestamp": datetime.now().isoformat(),
-                            "topic": topic,
-                            "subject": subject
-                        }
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Failed to parse AI-generated quiz JSON: {e}")
-                    logger.debug(f"Raw response: {response[:200]}...")
-                except Exception as e:
-                    logger.warning(f"Error processing AI response: {e}")
-                    
-            raise Exception("AI quiz generation failed or invalid format")
-            
-        except Exception as e:
-            logger.warning(f"AI quiz generation failed, using template: {e}")
-            
-            # Fallback quiz template
-            fallback_quiz = [
-                {
-                    "question": f"What is the primary focus of {topic}?",
-                    "type": "multiple_choice",
-                    "options": [
-                        "Understanding basic concepts and applications",
-                        "Memorizing complex formulas only", 
-                        "Learning unrelated facts",
-                        "Avoiding practical examples"
-                    ],
-                    "correct_answer": 0,
-                    "explanation": f"{topic} focuses on building understanding through concepts and real-world applications."
-                },
-                {
-                    "question": f"Which approach best describes effective learning of {topic}?",
-                    "type": "multiple_choice", 
-                    "options": [
-                        "Rote memorization without context",
-                        "Connecting concepts to practical applications",
-                        "Ignoring foundational principles",
-                        "Learning in isolation from other topics"
-                    ],
-                    "correct_answer": 1,
-                    "explanation": f"Effective learning of {topic} involves connecting concepts to practical applications."
-                },
-                {
-                    "question": f"True or False: {topic} has real-world applications beyond academic study.",
-                    "type": "true_false",
-                    "correct_answer": True,
-                    "explanation": f"{topic} has numerous practical applications in professional and daily life contexts."
-                }
-            ]
-            
-            # Limit to requested number of questions
-            questions = fallback_quiz[:num_questions]
-            
-            return {
-                "questions": questions,
-                "generated_by": "template",
-                "timestamp": datetime.now().isoformat(),
-                "topic": topic,
-                "subject": subject
-            }
-
-    async def generate_adaptive_content(
+    async def generate_quiz_content(
         self,
         topic: str,
         subject: str,
-        student_performance: Dict[str, Any],
-        learning_objectives: List[str] = None
+        difficulty_level: str = "intermediate",
+        num_questions: int = 5,
+        quiz_type: str = "multiple_choice"
     ) -> Dict[str, Any]:
-        """Generate adaptive content based on student performance"""
-        
-        # Determine content difficulty based on performance
-        avg_score = student_performance.get("average_score", 0.5)
-        
-        if avg_score >= 0.8:
-            difficulty = "advanced"
-        elif avg_score >= 0.6:
-            difficulty = "intermediate"  
-        else:
-            difficulty = "beginner"
-            
-        # Generate lesson content
-        lesson_content = await self.generate_lesson_content(
-            topic=topic,
-            subject=subject,
-            difficulty_level=difficulty
-        )
-        
-        # Generate appropriate quiz
-        quiz_content = await self.generate_quiz(
-            topic=topic,
-            subject=subject,
-            difficulty_level=difficulty,
-            num_questions=5
-        )
-        
-        return {
-            "lesson": lesson_content,
-            "quiz": quiz_content,
-            "difficulty_level": difficulty,
-            "adapted_for": student_performance,
-            "timestamp": datetime.now().isoformat()
-        }
-
-    async def generate_explanation(
-        self,
-        question: str,
-        context: str,
-        detail_level: str = "medium"
-    ) -> str:
-        """Generate detailed explanations for questions or concepts"""
+        """Generate quiz content using local AI models"""
         try:
-            prompt = f"""Provide a clear, {detail_level}-detail explanation for this question:
-
-Question: {question}
-Context: {context}
+            prompt = f"""Create a {difficulty_level} level quiz on '{topic}' in {subject}.
 
 Requirements:
-- Clear and understandable language
-- Step-by-step reasoning if applicable
-- Examples when helpful
-- Connections to broader concepts
-- Practical relevance
+- Generate exactly {num_questions} questions
+- Question type: {quiz_type}
+- Difficulty: {difficulty_level}
+- Include clear, educational questions
+- Provide 4 multiple choice options per question
+- Include correct answers and explanations
+- Focus on understanding, not memorization
 
-Explanation:"""
+Format the response as JSON with this structure:
+{{
+    "questions": [
+        {{
+            "question": "Question text here",
+            "type": "multiple_choice",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "correct_answer": 0,
+            "explanation": "Explanation of why this answer is correct"
+        }}
+    ]
+}}
 
-            explanation = await self.model_manager.generate_content(
+Topic: {topic}
+Subject: {subject}"""
+
+            # Generate with local AI model
+            content = await self.model_manager.generate_content(
                 prompt=prompt,
-                content_type="explanation",
-                max_length=800,
-                temperature=0.5
+                content_type="quiz",
+                max_length=1500,
+                temperature=0.7
             )
             
-            if explanation and len(explanation.strip()) > 20:
-                return explanation.strip()
-            else:
-                raise Exception("Generated explanation too short")
+            if content and len(content.strip()) > 50:
+                # Try to parse JSON response
+                try:
+                    import json
+                    quiz_data = json.loads(content)
+                    if "questions" in quiz_data and len(quiz_data["questions"]) > 0:
+                        return {
+                            "quiz_id": f"quiz_{datetime.now().timestamp()}",
+                            "user_id": 1,  # Will be set by the endpoint
+                            "subject": subject,
+                            "topic": topic,
+                            "difficulty_level": difficulty_level,
+                            "num_questions": num_questions,
+                            "quiz_type": quiz_type,
+                            "questions": quiz_data["questions"],
+                            "generated_by": "ai_model",
+                            "timestamp": datetime.now().isoformat(),
+                            "generated_at": "now",
+                            "time_limit_minutes": num_questions * 2
+                        }
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse AI-generated quiz JSON")
+            
+            raise Exception("Generated quiz content invalid")
                 
         except Exception as e:
-            logger.warning(f"AI explanation generation failed: {e}")
-            return f"""This question relates to {context} and requires understanding of key concepts and their applications.
-
-To approach this effectively:
-1. Identify the main concept being asked about
-2. Consider how it connects to the broader topic
-3. Think about practical applications and examples
-4. Apply logical reasoning to reach the answer
-
-For more detailed explanations, consider reviewing the lesson material and practicing with similar examples."""
+            logger.warning(f"AI quiz generation failed, using template: {e}")
+            # Fallback template quiz
+            questions = []
+            for i in range(min(num_questions, 3)):  # Max 3 template questions
+                questions.append({
+                    "question": f"What is a key aspect of {topic} in {subject}?",
+                    "type": "multiple_choice",
+                    "options": [
+                        f"Understanding {topic} fundamentals",
+                        f"Memorizing {topic} definitions",
+                        f"Ignoring {topic} applications",
+                        f"Avoiding {topic} practice"
+                    ],
+                    "correct_answer": 0,
+                    "explanation": f"Understanding {topic} fundamentals is essential for mastering this concept in {subject}."
+                })
+            
+            return {
+                "quiz_id": f"quiz_{datetime.now().timestamp()}",
+                "user_id": 1,
+                "subject": subject,
+                "topic": topic,
+                "difficulty_level": difficulty_level,
+                "num_questions": len(questions),
+                "quiz_type": quiz_type,
+                "questions": questions,
+                "generated_by": "template",
+                "timestamp": datetime.now().isoformat(),
+                "generated_at": "now",
+                "time_limit_minutes": len(questions) * 2
+            }
 
     async def generate_chat_response(
         self,
         message: str,
-        conversation_history: List[Dict[str, str]] = None,
         subject: str = "General",
+        conversation_history: Optional[List[Dict]] = None,
         max_tokens: int = 500
     ) -> str:
         """Generate a conversational response for the AI tutor chat"""
         try:
-            # Try OpenAI first if available
-            await openai_service.initialize()
-            if openai_service.initialized:
-                # Build context from conversation history
-                context = ""
-                if conversation_history:
-                    context = "Previous conversation:\n"
-                    for msg in conversation_history[-3:]:  # Last 3 messages for context
-                        role = "Student" if msg["role"] == "user" else "Tutor"
-                        context += f"{role}: {msg['content']}\n"
-                
-                prompt = f"""You are an AI tutor specializing in {subject}. Please respond to this student's question in a helpful, educational manner:
-
-Student Question: {message}
-{context}
-
-Requirements:
-- Be friendly and encouraging
-- Provide clear, educational explanations
-- Use examples when helpful
-- Keep the response focused and concise
-- Encourage further learning
-- Stay focused on {subject} topics
-
-Response:"""
-
-                response = await openai_service.generate_content(
-                    prompt=prompt,
-                    content_type="chat",
-                    max_tokens=max_tokens,
-                    temperature=0.7
-                )
-                
-                if response and len(response.strip()) > 10:
-                    logger.info("✅ Generated response using OpenAI")
-                    return response.strip()
-            
-            # Fallback to local AI models
+            # Use local models for chat generation
             # Build context from conversation history
             context = ""
             if conversation_history:
@@ -421,6 +267,7 @@ Requirements:
 
 Response:"""
 
+            # Generate with local AI model
             response = await self.model_manager.generate_content(
                 prompt=prompt,
                 content_type="chat",
@@ -428,24 +275,86 @@ Response:"""
                 temperature=0.7
             )
             
-            if response and len(response.strip()) > 10:
-                logger.info("✅ Generated response using local AI models")
+            if response and len(response.strip()) > 20:
                 return response.strip()
             else:
                 raise Exception("Generated response too short")
                 
         except Exception as e:
-            logger.warning(f"AI chat response generation failed: {e}")
-            return f"""Thank you for your question about {subject}! I understand you're asking: "{message}"
+            logger.warning(f"AI chat generation failed, using template: {e}")
+            # Fallback template response
+            return f"""I'd be happy to help you with your question about {subject}! 
 
-While I work on generating a detailed response, here are some key points to consider:
+Your question: "{message}"
 
-1. **Break down the topic**: Think about the main concepts involved in {subject}
-2. **Look for connections**: How does this relate to what you've already learned?  
-3. **Practice examples**: Try working through similar problems or scenarios
-4. **Ask follow-up questions**: What specific aspects of {subject} would you like to explore further?
+This is an interesting topic in {subject}. To give you the best answer, I'd recommend:
+- Breaking down the question into smaller parts
+- Looking at examples and real-world applications
+- Practicing with related exercises
+- Exploring how this connects to other concepts
 
-I'm here to help guide your learning journey in {subject}. Feel free to ask more specific questions or request examples!"""
+Would you like me to explain any specific aspect in more detail, or do you have follow-up questions about {subject}?"""
+
+    async def generate_explanation(
+        self,
+        concept: str,
+        subject: str = "General",
+        level: str = "intermediate"
+    ) -> str:
+        """Generate an explanation of a concept"""
+        try:
+            prompt = f"""Explain the concept of '{concept}' in {subject} at a {level} level.
+
+Requirements:
+- Provide a clear, educational explanation
+- Use examples and analogies when helpful
+- Structure the explanation logically
+- Make it appropriate for {level} level understanding
+- Include practical applications if relevant
+
+Concept: {concept}
+Subject: {subject}
+Level: {level}"""
+
+            # Generate with local AI model
+            response = await self.model_manager.generate_content(
+                prompt=prompt,
+                content_type="explanation",
+                max_length=800,
+                temperature=0.7
+            )
+            
+            if response and len(response.strip()) > 50:
+                return response.strip()
+            else:
+                raise Exception("Generated explanation too short")
+                
+        except Exception as e:
+            logger.warning(f"AI explanation generation failed, using template: {e}")
+            # Fallback template explanation
+            return f"""## Understanding {concept} in {subject}
+
+{concept} is a fundamental concept in {subject} that helps us understand how systems work and interact. At a {level} level, we can think of {concept} as:
+
+**Key Points:**
+- {concept} represents important principles in {subject}
+- It helps us analyze and solve problems systematically
+- Understanding {concept} builds a foundation for more advanced topics
+- Real-world applications demonstrate its practical value
+
+**Why It Matters:**
+{concept} is essential because it provides a framework for thinking about {subject} problems. By understanding {concept}, you can:
+- Approach problems more systematically
+- Make better predictions and decisions
+- Connect different ideas in {subject}
+- Apply knowledge in practical situations
+
+**Next Steps:**
+To deepen your understanding of {concept}:
+- Practice with examples and exercises
+- Explore how it relates to other concepts
+- Look for real-world applications
+- Ask questions and seek clarification when needed"""
 
 # Create global instance
 advanced_ai_generator = AdvancedAIGenerator()

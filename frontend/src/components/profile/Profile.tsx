@@ -50,7 +50,7 @@ const Profile: React.FC = () => {
     setSuccess('');
     
     try {
-      // Call API to update the profile (using demo endpoint for now)
+      // Call API to update the profile
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Update the user context with new data

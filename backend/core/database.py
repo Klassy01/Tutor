@@ -15,21 +15,13 @@ import asyncio
 from backend.core.config import settings
 
 
-# Create SQLAlchemy engine
-if settings.DATABASE_URL.startswith("sqlite"):
-    # SQLite specific configuration
-    engine = create_engine(
-        settings.DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=settings.DATABASE_ECHO
-    )
-else:
-    # PostgreSQL and other databases
-    engine = create_engine(
-        settings.DATABASE_URL,
-        echo=settings.DATABASE_ECHO
-    )
+# Create SQLAlchemy engine for SQLite
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+    echo=settings.DATABASE_ECHO
+)
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

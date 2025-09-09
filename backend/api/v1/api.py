@@ -2,7 +2,6 @@
 API v1 router configuration.
 
 Real production endpoints for the AI Learning Platform.
-All demo endpoints have been removed.
 """
 
 from fastapi import APIRouter

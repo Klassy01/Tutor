@@ -8,7 +8,7 @@ FastAPI-based backend for the AI-Powered Personal Tutor system, providing RESTfu
 - **FastAPI**: High-performance async web framework
 - **SQLAlchemy**: ORM for database operations
 - **Alembic**: Database migrations
-- **SQLite**: Development database (PostgreSQL ready)
+- **SQLite**: Lightweight, file-based database
 - **JWT**: Authentication and authorization
 - **WebSocket**: Real-time communication
 
@@ -49,7 +49,7 @@ backend/
 │   └── user_analytics.py         # User analytics
 ├── services/                     # Business logic services
 │   ├── advanced_ai_generator.py  # AI content generation
-│   ├── openai_service.py         # OpenAI API integration
+│   ├── local_ai_models.py        # Local AI models (Ollama)
 │   ├── ai_models.py              # Local AI models (Ollama)
 │   ├── adaptive_learning.py      # Adaptive algorithms
 │   ├── progress_service.py       # Progress tracking
@@ -88,12 +88,11 @@ backend/
 
 4. **Configure environment (optional)**
    ```bash
-   # For OpenAI integration
-   export OPENAI_API_KEY=your-openai-api-key
-   
    # For local AI models
-   # Install Ollama: curl -fsSL https://ollama.ai/install.sh | sh
-   # Pull models: ollama pull llama3:8b
+   curl -fsSL https://ollama.ai/install.sh | sh
+   ollama pull llama3:8b
+   ollama pull mistral:7b
+   ollama pull qwen2.5:7b
    ```
 
 5. **Start the server**
@@ -108,7 +107,6 @@ backend/
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/refresh` - Token refresh
 - `GET /api/v1/auth/me` - Get current user
-- `POST /api/v1/auth/demo/login` - Demo login
 
 ### Learning & Content
 - `POST /api/v1/lessons/generate` - Generate AI lesson
@@ -139,14 +137,14 @@ The `advanced_ai_generator.py` service orchestrates AI content generation:
 - **Lesson Generation**: Creates structured lessons with content, examples, and key concepts
 - **Quiz Generation**: Generates multiple question types with explanations
 - **Chat Responses**: Provides contextual AI tutoring responses
-- **Multi-Provider Support**: OpenAI API with Ollama fallback
+- **Local AI Support**: Ollama models for all AI features
 
-### OpenAI Service
-The `openai_service.py` handles OpenAI API integration:
+### Local AI Service
+The `local_ai_models.py` handles local AI model integration:
 
-- **Content Generation**: High-quality content using GPT models
-- **Error Handling**: Graceful fallback when API is unavailable
-- **Rate Limiting**: Built-in request management
+- **Content Generation**: High-quality content using Ollama models
+- **Privacy-First**: All processing happens locally
+- **No API Keys**: Works entirely offline
 
 ### Local AI Models
 The `ai_models.py` manages local Ollama models:
@@ -178,14 +176,13 @@ The `ai_models.py` manages local Ollama models:
 |----------|-------------|---------|
 | `DATABASE_URL` | Database connection | `sqlite:///./learning_tutor.db` |
 | `SECRET_KEY` | JWT secret key | `dev-secret-key-change-in-production-12345` |
-| `OPENAI_API_KEY` | OpenAI API key | Optional |
-| `AI_PROVIDER` | AI provider preference | `openai` |
+| `AI_PROVIDER` | AI provider preference | `local` |
 | `DEBUG` | Debug mode | `True` |
 | `CORS_ORIGINS` | Allowed CORS origins | `http://localhost:3000,http://localhost:5173` |
 
 ### Database Configuration
 - **Development**: SQLite (no setup required)
-- **Production**: PostgreSQL (configure DATABASE_URL)
+- **Production**: SQLite (configure DATABASE_URL if needed)
 - **Migrations**: Alembic for schema management
 
 ## 🛠️ Development
@@ -232,7 +229,6 @@ mypy backend/
 - **JWT Tokens**: Secure token-based authentication
 - **Password Hashing**: Bcrypt for password security
 - **Token Refresh**: Automatic token renewal
-- **Demo Mode**: Safe demo login for testing
 
 ### API Security
 - **CORS**: Configured cross-origin resource sharing
@@ -258,7 +254,7 @@ mypy backend/
 
 ### Production Setup
 1. **Set production environment variables**
-2. **Configure PostgreSQL database**
+2. **Database is ready** (SQLite file will be created automatically)
 3. **Set up reverse proxy (nginx)**
 4. **Configure SSL certificates**
 5. **Set up monitoring and logging**

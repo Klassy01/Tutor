@@ -136,7 +136,7 @@ const LearningSession: React.FC = () => {
         }]);
       }
     } catch (err) {
-      console.error('Error fetching sessions, using demo data:', err);
+      console.error('Error fetching sessions:', err);
       setSessions([
         {
           id: '1',

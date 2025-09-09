@@ -39,19 +39,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     
     # AI/ML Service settings
-    AI_PROVIDER: str = "openai"  # "openai", "gemini", or "huggingface"
-    
-    # OpenAI settings
-    OPENAI_API_KEY: Optional[str] = None
-    OPENAI_MODEL: str = "gpt-3.5-turbo"
-    
-    # Google Gemini settings
-    GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "gemini-1.5-flash"
-    
-    # Hugging Face settings
-    HUGGINGFACE_API_TOKEN: Optional[str] = None
-    HUGGINGFACE_MODEL: str = "microsoft/DialoGPT-medium"
+    AI_PROVIDER: str = "local"  # Local AI models only
     
     # Common AI settings
     MAX_TOKENS: int = 150
@@ -87,10 +75,8 @@ class Settings(BaseSettings):
     # Progress tracking ML model settings
     PROGRESS_MODEL_PATH: str = "./models/progress_model.pkl"
     
-    # Hugging Face model settings
-    HF_DATASETS_OFFLINE: str = "0"
-    TRANSFORMERS_OFFLINE: str = "0" 
-    HF_HOME: str = "./models/huggingface_cache"
+    # Local AI model settings
+    LOCAL_MODELS_PATH: str = "./models/local_cache"
     
     @property
     def cors_origins_list(self) -> List[str]:

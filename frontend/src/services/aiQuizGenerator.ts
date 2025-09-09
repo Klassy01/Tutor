@@ -30,8 +30,8 @@ class AIQuizGeneratorService {
   private apiUrl: string;
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY || '';
-    this.apiUrl = 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium';
+    // Using local AI models - no API keys required
+    this.apiUrl = '/api/v1/ai-tutor/ask-quick';
   }
 
   async generateQuiz(request: QuizGenerationRequest): Promise<Question[]> {

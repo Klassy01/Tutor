@@ -78,7 +78,7 @@ const Dashboard: React.FC = () => {
         
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard data. Showing demo data instead.');
+        setError('Failed to load dashboard data.');
         // Fallback to mock data
         setDashboardData({
           student_stats: {

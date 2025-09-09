@@ -19,7 +19,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, demoLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -67,24 +67,6 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setError('');
-    setLoading(true);
-
-    try {
-      const success = await demoLogin();
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setError('Demo login failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Demo login error:', error);
-      setError('Demo login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <Box
@@ -242,35 +224,6 @@ const LoginPage: React.FC = () => {
               disabled={loading}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
-            </Button>
-            <Button
-              onClick={handleDemoLogin}
-              fullWidth
-              variant="outlined"
-              sx={{ 
-                mt: 1,
-                mb: 2,
-                py: { xs: 1.2, sm: 1.5 },
-                fontSize: { xs: '0.9rem', sm: '1rem' },
-                fontWeight: 600,
-                borderRadius: 2,
-                borderColor: '#6366f1',
-                color: '#6366f1',
-                '&:hover': {
-                  borderColor: '#5b5bd6',
-                  backgroundColor: 'rgba(99, 102, 241, 0.04)',
-                  transform: 'translateY(-1px)',
-                },
-                '&:disabled': {
-                  borderColor: 'rgba(0, 0, 0, 0.12)',
-                  color: 'rgba(0, 0, 0, 0.26)',
-                  transform: 'none',
-                },
-                transition: 'all 0.3s ease',
-              }}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Try Demo'}
             </Button>
             <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Link to="/register" style={{ textDecoration: 'none' }}>

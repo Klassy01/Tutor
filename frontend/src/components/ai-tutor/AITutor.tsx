@@ -201,7 +201,7 @@ const AITutor: React.FC = () => {
     } catch (err) {
       console.error('Error calling AI tutor API:', err);
       
-      // Fallback to demo response if API fails
+      // Fallback response if API fails
       let aiResponse: ChatMessage;
       
       if (content.toLowerCase().includes('math') || content.toLowerCase().includes('algebra')) {

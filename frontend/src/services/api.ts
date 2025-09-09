@@ -39,7 +39,6 @@ export const authAPI = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
   
-  demoLogin: () => api.post('/auth/demo/login', {}),
   
   register: (userData: {
     email: string;
@@ -194,7 +193,7 @@ export const learningAPI = {
 
 export const progressAPI = {
   getOverview: () => dashboardAPI.getOverview(),
-  getDetailed: (params?: any) => dashboardAPI.getProgressChart(),
+  getDetailed: () => dashboardAPI.getProgressChart(),
   getSubjectProgress: () => dashboardAPI.getSubjectBreakdown(),
   getMasteryMap: () => dashboardAPI.getOverview(),
   getLearningPath: () => lessonAPI.getRecommendations(),
