@@ -6,6 +6,7 @@ Provides OpenAI GPT integration for high-quality educational content.
 
 import asyncio
 import logging
+import os
 from typing import Optional, Dict, Any, List
 import openai
 from openai import AsyncOpenAI

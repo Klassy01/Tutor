@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from datetime import datetime
+import logging
 
 from backend.core.database import get_db
 from backend.models.student import Student
@@ -17,6 +18,7 @@ from backend.models.learning_session import LearningSession, SessionInteraction
 from backend.models.content import Content
 from backend.api.dependencies import get_current_student
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -107,10 +109,9 @@ async def create_learning_session(
         ).first()
         
         if not content:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Content not found or not available"
-            )
+            # Log warning but don't fail - allow session creation without content
+            logger.warning(f"Content ID {session_request.content_id} not found, creating session without content")
+            session_request.content_id = None
     
     # Create learning session
     session = LearningSession(
@@ -126,7 +127,7 @@ async def create_learning_session(
     db.commit()
     db.refresh(session)
     
-    return SessionResponse.from_orm(session)
+    return SessionResponse.model_validate(session)
 
 
 @router.get("/sessions", response_model=List[SessionResponse])
@@ -158,7 +159,7 @@ async def get_learning_sessions(
         LearningSession.started_at.desc()
     ).offset(offset).limit(limit).all()
     
-    return [SessionResponse.from_orm(session) for session in sessions]
+    return [SessionResponse.model_validate(session) for session in sessions]
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
@@ -184,7 +185,7 @@ async def get_learning_session(
             detail="Learning session not found"
         )
     
-    return SessionResponse.from_orm(session)
+    return SessionResponse.model_validate(session)
 
 
 @router.post("/sessions/{session_id}/interactions", response_model=InteractionResponse)
@@ -254,7 +255,7 @@ async def create_session_interaction(
     db.commit()
     db.refresh(interaction)
     
-    return InteractionResponse.from_orm(interaction)
+    return InteractionResponse.model_validate(interaction)
 
 
 @router.get("/sessions/{session_id}/interactions", response_model=List[InteractionResponse])
@@ -291,7 +292,7 @@ async def get_session_interactions(
     
     interactions = query.order_by(SessionInteraction.sequence_number).all()
     
-    return [InteractionResponse.from_orm(interaction) for interaction in interactions]
+    return [InteractionResponse.model_validate(interaction) for interaction in interactions]
 
 
 @router.put("/sessions/{session_id}/pause")

@@ -249,7 +249,6 @@ const LearningSession: React.FC = () => {
         let sessionId = Date.now().toString();
         try {
           const sessionResponse = await learningAPI.createSession({
-            content_id: 1,
             session_type: newSessionData.session_type,
             subject_area: newSessionData.subject_area,
             topic: newSessionData.topic
